@@ -2,10 +2,10 @@ const express = require('express');
 const cors = require('cors');
 const { default: mongoose } = require('mongoose');
 const app = express();
-const logService = require('./controllers/logsController')
-const PORT = 3000;
+const logService = require('./controllers/logsController');
+require('dotenv').config()
 
-logService.connectDB();
+// logService.connectDB();
 
 app.use(express.json())
 app.use(cors({
@@ -41,9 +41,13 @@ app.get('/log/title/:title', async (req, res) => {
     return res.status(404).json({'message':'log not found'})
 });
 
-mongoose.connection.once('open', () => {
-    console.log('Connected to mongoDB')
-    app.listen(3000, ()=>{
-        console.log('Server started on port ' + PORT);
-    });
-})
+// mongoose.connection.once('open', () => {
+//     console.log('Connected to mongoDB')
+//     app.listen(3000, ()=>{
+//         console.log('Server started on port ' + process.env.PORT);
+//     });
+// })
+
+app.listen(process.env.PORT, ()=>{
+            console.log('Server started on port ' + process.env.PORT);
+        });
