@@ -19,9 +19,3 @@ Make sure you have node installed:
 ```
 brew install nodeq
 ```
-
-## MongoDB Local
-
-https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-os-x/
-
-Start 

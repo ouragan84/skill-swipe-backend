@@ -1,52 +1,31 @@
-const mongoose = require('mongoose');
-// const DB_HOST = "127.0.0.1"
-// const DB_PORT = "27017"
-// const DB_NAME = "logs-test"
-// const DB_OPTIONS = "?directConnection=true&serverSelectionTimeoutMS=2000"
+const express = require('express');
+const logService = require('../services/logsService');
 
-//db.createUser({user:"user",pwd:"password",roles:[]})
+const logsController = express();
 
-const DB_URL = 'mongodb://user:password@127.0.0.1:27017/logs-test'
+logsController.post('/', (req, res) => {
+    logService.handleLog(req, res);
+});
 
-const Logs = require('../models/log')
+logsController.get('/', async (req, res) => {
+    let result = await logService.getAllLogs();
+    if(result)
+        return res.send(result);
+    return res.status(404).json({'message':'log not found'})
+});
 
-const connectDB = async () => {
-    try{
-        await mongoose.connect(DB_URL, {
-            
-        });
-    }catch (err){
-        console.error(err);
-    }
-}
+logsController.get('/count', async (req, res) => {
+    let result = await logService.getLogNumber();
+    if(result)
+        return res.send(String(result));
+    return res.status(404).json({'message':'log not found'})
+});
 
-const handleLog = async (req, res) => {
-    const {message, title} = req.body;
-    if(!message || !title) return res.status(400).json({'message':'Error creating Log'});
-    time = Date.now();
+logsController.get('/title/:title', async (req, res) => {
+    let result = await logService.findLogByTitle(req.params.title);
+    if(result)
+        return res.send(String(result));
+    return res.status(404).json({'message':'log not found'})
+});
 
-    const result = await Logs.create({
-        'title':title,
-        'message':message,
-        'time':time
-    });
-
-    console.log("created log record " + result);
-
-    return res.status(201).json({'message':'Success creating Log'});
-}
-
-const findLogByTitle = async (title) => {
-    return await Logs.findOne({title:title}).exec();
-} 
-
-const getAllLogs = async () => {
-    return await Logs.find({});
-} 
-
-const getLogNumber = async () => {
-    return await Logs.count();
-} 
-
-
-module.exports = {connectDB, handleLog, findLogByTitle, getAllLogs, getLogNumber}
+module.exports = logsController;
