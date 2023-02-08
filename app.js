@@ -16,6 +16,8 @@ const app = express();
 // connect DB
 mongoDBConnect.connectDB();
 
+// TODO: Add API Token to make it more secure
+
 // some options 
 app.use(express.json())
 app.use(cors({
