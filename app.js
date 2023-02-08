@@ -21,6 +21,11 @@ mongoDBConnect.connectDB();
 // some options 
 app.use(express.json())
 app.use(cors({
+    // origin: ['http://localhost:19006',
+    // 'https://skill-swipe.netlify.app/', 
+    // '35.160.120.126',
+    // '44.233.151.27',
+    // '34.211.200.85']
     origin: '*'
 }));
 
@@ -31,7 +36,7 @@ app.use('/logs', logsController);
 // start listening for connections
 mongoose.connection.once('open', () => {
     console.log('Connected to mongoDB')
-    app.listen(3000, ()=>{
+    app.listen(process.env.PORT, ()=>{
         console.log('Server started on port ' + process.env.PORT);
     });
 })
