@@ -21,11 +21,7 @@ mongoDBConnect.connectDB();
 // some options 
 app.use(express.json())
 app.use(cors({
-    origin: ['http://localhost:19006',
-    'https://skill-swipe.netlify.app/', 
-    '35.160.120.126',
-    '44.233.151.27',
-    '34.211.200.85']
+    origin: '*'
 }));
 
 // add routes from controllers
