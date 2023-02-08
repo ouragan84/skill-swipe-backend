@@ -16,12 +16,16 @@ const app = express();
 // connect DB
 mongoDBConnect.connectDB();
 
-// TODO: Add API Token to make it more secure
+// TODO ??? Add API Token to make it more secure
 
 // some options 
 app.use(express.json())
 app.use(cors({
-    origin: 'http://localhost:19006'
+    origin: ['http://localhost:19006',
+    'https://skill-swipe.netlify.app/', 
+    '35.160.120.126',
+    '44.233.151.27',
+    '34.211.200.85']
 }));
 
 // add routes from controllers
