@@ -7,8 +7,8 @@ require('dotenv').config()
 // local imports
 const mongoDBConnect = require('./mongoDBConnect');
 const logsController = require('./controllers/logsController');
+const imageController = require('./controllers/imageController');
 const rootController = require('./controllers/rootController');
-
 
 // create app
 const app = express();
@@ -32,6 +32,7 @@ app.use(cors({
 // add routes from controllers
 app.use('/', rootController);
 app.use('/logs', logsController);
+app.use('/image', imageController);
 
 // start listening for connections
 mongoose.connection.once('open', () => {
