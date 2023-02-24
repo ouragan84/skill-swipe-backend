@@ -202,7 +202,7 @@ const getLoggedConsumer = async (req, res) => {
 
 const deleteConsumer = async (req, res) => {
     try {
-        await Test.deleteOne({ _id: req.consumer._id });
+        await consumerSchema.deleteOne({ _id: req.consumer._id });
         res.status(200).send({"status": "success", "message": "deleted consumer successfully"});
     } catch (err) {
         res.status(400).send({"status": "success", "message": err.message});
