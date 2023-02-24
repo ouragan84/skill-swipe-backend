@@ -4,89 +4,27 @@ const consumerSchema = require('../models/consumer');
 const {checkPropertyExists} = require('../hooks/propertyCheck');
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-const {sendMail, sendConfirmationEmailTemplate} = require('../hooks/emailConfig.js')
+const {sendMail, sendConfirmationEmailTemplate, sendPasswordResetEmailTemplate} = require('../hooks/emailConfig.js')
 const auth = require('../hooks/authMiddleware');
 const dotenv = require('dotenv');
 dotenv.config();
 
-// call to create 
-// const createConsumer = async (req, res) => {
-//     try{
-//         const {consumer} = req.body;
-//         checkPropertyExists(consumer, "userSignUp", Object);
-//         checkPropertyExists(consumer.username, "username", String);
-//         checkPropertyExists(consumer.password, "password", String);
-//         checkPropertyExists(consumer.isTypeUser, "isTypeUser", Boolean);
-
-//         const exists = await consumerSchema.exists({ username: consumer.username });
-
-//         if(exists)
-//             throw new Error("Could not Sign Up consumer, username " + consumer.username + " is already taken");
-
-//         if(consumer.password.length < 8)
-//             throw new Error("Could not Sign Up consumer, password is less than 8 characters");
-        
-//         if(! /^[\x21-\x7E]$/.test(consumer.username))
-//             throw new Error("Could not Sign Up consumer, username is not ASCII only");
-
-//         if(! /^[\x21-\x7E]$/.test(consumer.password))
-//             throw new Error("Could not Sign Up consumer, password is not ASCII only");
-
-//         if(! /[A-Z]/.test(consumer.password))
-//             throw new Error("Could not Sign Up consumer, password does not have a upper case letter");
-
-//         if(! /[a-z]/.test(consumer.password))
-//             throw new Error("Could not Sign Up consumer, password does not have a lower case letter");
-
-//         if(! /[0-9]/.test(consumer.password))
-//             throw new Error("Could not Sign Up consumer, password does not have a digit");
-
-//         if(! /^[A-Za-z0-9]/.test(consumer.password))
-//             throw new Error("Could not Sign Up consumer, password does not have a special character");
-
-//         return res.send(saveConsumer(consumer));
-            
-//     }catch (error){
-//         res.status(400).json({'message':error.message});
-//     }
-// } 
-
-// const saveConsumer = (consumer) => {
-//     bcrypt.genSalt(10, function (err, salt) {
-// 		if (err)
-//             throw new Error("Problem while hashing new consumer password");
-
-// 		bcrypt.hash(consumer.password, salt, function (err, hash) {
-// 			if (err) return next(err);
-			
-// 			const newConsumer = new consumerSchema({
-// 				username: consumer.username,
-// 				password: hash,
-//                 isTypeUser: consumer.isTypeUser
-// 			});
-
-// 			return newConsumer.save();
-// 		});
-// 	});
-// }
-
 const registerConsumer = async (req, res) => {
     try {
-        const { email, isTypeUser, password, password_confirmation, termsAndConditions} = req.body;
+        const { email, isTypeUser, password, termsAndConditions} = req.body;
 
         checkPropertyExists(email, "email", 'string', "create consumer");
         checkPropertyExists(isTypeUser, "isTypeUser", 'boolean', "create consumer");
         checkPropertyExists(password, "password", 'string', "create consumer");
-        checkPropertyExists(password_confirmation, "password_confirmation", 'string', "create consumer");
         checkPropertyExists(termsAndConditions, "termsAndConditions", 'boolean', "create consumer");
+
+        checkEmail(email);
+        checkPassword(password);
 
         const consumerSameEmail = await consumerSchema.findOne({ email: email })
 
         if (consumerSameEmail)
             throw new Error("Could not create consumer, email adress already in use");
-
-        if (password != password_confirmation)
-            throw new Error("Could not create consumer, password and password confirmation did not match");
 
         if (!termsAndConditions)
             throw new Error("Could not create consumer, terms and conditions have not been accepted");
@@ -99,15 +37,13 @@ const registerConsumer = async (req, res) => {
             termsAndConditions: termsAndConditions,
             isTypeUser: isTypeUser,
             dateCreated: Date.now(),
-            isEmailConfrimed: false
+            isEmailConfrimed: false,
+            isAccountComplete: false
         })
         await doc.save()
         const consumerPrototype = await consumerSchema.findOne({ email: email })
         // Generate JWT Token
         const token = await auth.generateSessionToken(consumerPrototype);
-
-        // console.log(token);
-
         res.status(201).send({ "status": "success", "message": "Registration Success", "token": token })
 
     } catch (err) {
@@ -134,8 +70,6 @@ const loginConsumer = async (req, res) => {
 
         const token = await auth.generateSessionToken(consumer);
 
-        sendEmailConfirmation(consumer);
-
         res.status(200).send({ "status": "success", "message": "Login Success", "token": token })
 
     } catch (err) {
@@ -143,20 +77,26 @@ const loginConsumer = async (req, res) => {
     }
 }
 
-const sendEmailConfirmation = async (consumerPrototype) => {
-    const confirmation_token = await auth.getConfirmationToken(consumerPrototype);
-    const link = `${process.env.OWN_URL}/consumer/confirm/email/${confirmation_token}`
-    sendConfirmationEmailTemplate(consumerPrototype.email, link);
+const sendEmailConfirmation = async (req, res) => {
+    try {
+        const consumerPrototype = req.consumer;
+        const confirmation_token = await auth.getConfirmationToken(consumerPrototype);
+        const link = `${process.env.OWN_URL}/consumer/confirm/email/${confirmation_token}`
+        await sendConfirmationEmailTemplate(consumerPrototype.email, link);
+        res.status(200).send({"status": `success`, "message": `Email confirmation sent successfully`});
+    } catch (err) {
+        res.status(500).send({"status": `failure`, "message": err.message});
+    }
 }
 
 const checkEmailConfirmation = async (req, res) => {
     try{
         const {token} = req.params;
         if(!token)
-            throw new Error("1");
+            throw new Error("token is null");
         const consumer = await auth.checkConfirmationToken(token, false);
         if (!consumer)
-            throw new Error("2");
+            throw new Error("consumer is null");
 
         await consumerSchema.findByIdAndUpdate(consumer._id, { $set: { isEmailConfrimed: true } });
         
@@ -167,9 +107,107 @@ const checkEmailConfirmation = async (req, res) => {
     }
 }
 
+// request password reset email
+const sendPasswordResetCode = async (req, res) => {
+    try {
+        const {email} = req.body;
+        checkPropertyExists(email, "email", "string", "send password reset code");
+
+        const consumer = await consumerSchema.findOne({ email: email })
+        if(!consumer)
+            throw new Error("Cannot send password reset code, user not found");
+
+        const code = await auth.getPWResetCode(consumer);
+        await sendPasswordResetEmailTemplate(email, code);
+        res.status(200).send({"status": `success`, "message": `sent password reset code`});
+    } catch (err) {
+        res.status(400).send({"status": `failure`, "message": err.message});
+    }
+}
+
+const checkPasswordResetCode = async (req, res) => {
+    try {
+        const {email, code} = req.body;
+        checkPropertyExists(email, "email", "string", "check password reset code");
+        checkPropertyExists(code, "email", "string", "check password reset code");
+
+        const consumer = await consumerSchema.findOne({ email: email })
+        if(!consumer)
+            throw new Error("Cannot check password reset code, user not found");
+
+        const is_correct = await auth.checkPWResetCode(email, code);
+        if(!is_correct)
+            throw new Error("Cannot check password reset code, code is incorrect");
+        
+        const token = await auth.getConfirmationToken(consumer, true);
+        res.status(200).send({"status": `success`, "message": `password reset code verified`, "token": token});
+    } catch (err) {
+        res.status(401).send({"status": `failure`, "message": err.message});
+    }
+}
+
+// actually reset the password
+const resetPassword = async (req, res) => {
+    try {
+        const {password} = req.body;
+        checkPropertyExists(password, "password", "string", "reset password");
+
+        const token = await auth.getTokenFromHeader(req.headers);
+
+        const consumer = await auth.checkConfirmationToken(token, true);
+
+        if(!consumer)
+            throw new Error("Cannot reset password, error in authorization");
+
+        checkPassword(password);
+
+        const salt = await bcrypt.genSalt(10)
+        const hashPassword = await bcrypt.hash(`${consumer.email}${password}`, salt)
+
+        await consumerSchema.findByIdAndUpdate(consumer._id, { $set: { password: hashPassword } })
+        res.status(200).send({"status": `success`, "message": `reset password successfully`});
+    } catch (err) {
+        res.status(401).send({"status": `failure`, "message": err.message});
+    }   
+}
+
+const checkPassword = (password) => {
+    if(password.length < 8)
+        throw new Error("Could not Sign Up consumer, password is less than 8 characters");
+
+    if(! /^[\x20-\x7E]*$/.test(password))
+        throw new Error("Could not Sign Up consumer, password is not ASCII only");
+
+    if(! /[A-Z]/.test(password))
+        throw new Error("Could not Sign Up consumer, password does not have a upper case letter");
+
+    if(! /[a-z]/.test(password))
+        throw new Error("Could not Sign Up consumer, password does not have a lower case letter");
+
+    if(! /[0-9]/.test(password))
+        throw new Error("Could not Sign Up consumer, password does not have a digit");
+
+    if(! /[^A-Za-z0-9]/.test(password))
+        throw new Error("Could not Sign Up consumer, password does not have a special character");
+}
+
+const checkEmail = (email) => {
+    if(! /^[\x21-\x7E]*$/.test(email) || !email.includes('@') || !email.includes('.'))
+        throw new Error("Could not Sign Up consumer, email is not valid");
+}
+
 const getLoggedConsumer = async (req, res) => {
     res.status(200).send({ "consumer": req.consumer })
 }
 
+const deleteConsumer = async (req, res) => {
+    try {
+        await Test.deleteOne({ _id: req.consumer._id });
+        res.status(200).send({"status": "success", "message": "deleted consumer successfully"});
+    } catch (err) {
+        res.status(400).send({"status": "success", "message": err.message});
+    }
+}
 
-module.exports = {registerConsumer, loginConsumer, getLoggedConsumer, checkEmailConfirmation};
+module.exports = {registerConsumer, loginConsumer, getLoggedConsumer, checkEmailConfirmation, 
+    sendEmailConfirmation, sendPasswordResetCode, resetPassword, checkPasswordResetCode, deleteConsumer};

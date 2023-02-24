@@ -28,6 +28,10 @@ const consumerSchema = new Schema({
         type: Boolean,
         required: true
     },
+    isAccountComplete:{
+        type: Boolean,
+        required: true
+    },
     lastTokenDate:{
         type: Date,
         required: false

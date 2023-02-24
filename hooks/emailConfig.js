@@ -32,7 +32,7 @@ const sendMail = (to, subject, text, html=null) => {
 }
 
 const sendConfirmationEmailTemplate = (to, link) => {
-  sendMail(to, "Skill Swipe Confirmation Email", "", 
+  sendMail(to, "Skill Swipe Email Confirmation", "", 
   `
     <style type="text/css">
     /**
@@ -283,4 +283,8 @@ const sendConfirmationEmailTemplate = (to, link) => {
   `)
 }
 
-module.exports = {sendMail, sendConfirmationEmailTemplate};
+const sendPasswordResetEmailTemplate = (to, code) => {
+  sendMail(to, "Skill Swipe Password Reset", ``, `<h2> PASTE THIS CODE ${code} </h2>`)
+}
+
+module.exports = {sendMail, sendConfirmationEmailTemplate, sendPasswordResetEmailTemplate};
