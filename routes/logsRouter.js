@@ -1,31 +1,31 @@
-const express = require('express');
 const logService = require('../services/logsService');
+const express = require('express');
 
-const logsController = express();
+const router = express.Router();
 
-logsController.post('/', (req, res) => {
+router.post('/', (req, res) => {
     logService.handleLog(req, res);
 });
 
-logsController.get('/', async (req, res) => {
+router.get('/', async (req, res) => {
     let result = await logService.getAllLogs();
     if(result)
         return res.send(result);
     return res.status(404).json({'message':'log not found'})
 });
 
-logsController.get('/count', async (req, res) => {
+router.get('/count', async (req, res) => {
     let result = await logService.getLogNumber();
     if(result)
         return res.send(String(result));
     return res.status(404).json({'message':'log not found'})
 });
 
-logsController.get('/title/:title', async (req, res) => {
+router.get('/title/:title', async (req, res) => {
     let result = await logService.findLogByTitle(req.params.title);
     if(result)
         return res.send(String(result));
     return res.status(404).json({'message':'log not found'})
 });
 
-module.exports = logsController;
+module.exports = router;
