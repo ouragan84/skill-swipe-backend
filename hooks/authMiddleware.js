@@ -54,7 +54,7 @@ const checkPWResetCode = async (email, code) => {
   const code_verify = (Number(`0x${hash}`)%1e6).toString().padStart(6, '0');
 
   if(code_verify != code)
-    throw new Error(`Cannot confirm code, code is not correct, try pressing "Resend Code"`);
+    throw new Error(`Code is incorrect, please request a new code`);
 
   return true;
 }
@@ -63,7 +63,7 @@ const generateSessionToken = async (consumer) => {
   const timeNow = Date.now();
   await consumerSchema.findByIdAndUpdate(consumer._id, { $set: { lastTokenDate: timeNow } })
 
-  return jwt.sign({ consumerID: consumer._id, tokenDate: timeNow}, process.env.SESSION_SECRET_KEY, { expiresIn: '12h' });
+  return jwt.sign({ consumerID: consumer._id, tokenDate: timeNow}, process.env.SESSION_SECRET_KEY, { expiresIn: '10m' });
 }
 
 const getTokenFromHeader = async (headers) => {
@@ -117,8 +117,10 @@ const checkConsumerConfirmedAuth = async (req, res, next) => {
 
     next();
   } catch (err) {
-    res.status(401).send({ "status": "failure", "message": err.message });
-  }
+    if(err.message == "jwt expired")
+      res.status(401).send({ "status": "failure", "message": "token expired", "token_expired":true });
+    else
+      res.status(401).send({ "status": "failure", "message": err.message });  }
 }
 
 const checkConsumerCompleteAuth = async (req, res, next) => {
@@ -133,7 +135,10 @@ const checkConsumerCompleteAuth = async (req, res, next) => {
 
     next();
   } catch (err) {
-    res.status(401).send({ "status": "failure", "message": err.message });
+    if(err.message == "jwt expired")
+      res.status(401).send({ "status": "failure", "message": "token expired", "token_expired":true });
+    else
+      res.status(401).send({ "status": "failure", "message": err.message });
   }
 }
 
