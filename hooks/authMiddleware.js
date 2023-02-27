@@ -63,7 +63,7 @@ const generateSessionToken = async (consumer) => {
   const timeNow = Date.now();
   await consumerSchema.findByIdAndUpdate(consumer._id, { $set: { lastTokenDate: timeNow } })
 
-  return jwt.sign({ consumerID: consumer._id, tokenDate: timeNow}, process.env.SESSION_SECRET_KEY, { expiresIn: '10m' });
+  return jwt.sign({ consumerID: consumer._id, tokenDate: timeNow}, process.env.SESSION_SECRET_KEY, { expiresIn: '1h' });
 }
 
 const getTokenFromHeader = async (headers) => {
