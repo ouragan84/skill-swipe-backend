@@ -11,23 +11,25 @@ dotenv.config();
 
 const registerConsumer = async (req, res) => {
     try {
-        const { email, isTypeUser, password, termsAndConditions} = req.body;
+        let { email, isTypeUser, password, termsAndConditions} = req.body;
 
         checkPropertyExists(email, "email", 'string', "create consumer");
         checkPropertyExists(isTypeUser, "isTypeUser", 'boolean', "create consumer");
         checkPropertyExists(password, "password", 'string', "create consumer");
         checkPropertyExists(termsAndConditions, "termsAndConditions", 'boolean', "create consumer");
 
-        checkEmail(email);
-        checkPassword(password);
+        email = email.toLowerCase();
 
         const consumerSameEmail = await consumerSchema.findOne({ email: email })
 
         if (consumerSameEmail)
-            throw new Error("Could not create consumer, email adress already in use");
+            throw new Error("email adress already in use");
+
+        checkEmail(email);
+        checkPassword(password);
 
         if (!termsAndConditions)
-            throw new Error("Could not create consumer, terms and conditions have not been accepted");
+            throw new Error("terms and conditions have not been accepted");
 
         const salt = await bcrypt.genSalt(10)
         const hashPassword = await bcrypt.hash(`${email}${password}`, salt)
@@ -53,20 +55,22 @@ const registerConsumer = async (req, res) => {
 
 const loginConsumer = async (req, res) => {
     try {
-        const { email, password } = req.body
+        let { email, password } = req.body
 
         checkPropertyExists(email, "email", 'string', "log in consumer")
         checkPropertyExists(password, "password", 'string', "log in consumer")
 
+        email = email.toLowerCase();
+
         const consumer = await consumerSchema.findOne({ email: email })
 
         if(!consumer)
-            throw new Error("Could not log in consumer, consumer is not registered");
+            throw new Error("user is not registered");
 
         const isMatch = await bcrypt.compare(`${email}${password}`, consumer.password);
 
         if (!isMatch)
-            throw new Error("Could not log in consumer, Email or Password is not Valid");
+            throw new Error("Email or Password is not Valid");
 
         const token = await auth.generateSessionToken(consumer);
 
@@ -103,23 +107,26 @@ const checkEmailConfirmation = async (req, res) => {
         res.status(200).send(`Thank you for confirming your email adress! Please check back in the App for the next steps in creating your account.`);
     } catch (err) {
         console.log(err.message);
-        res.status(401).send(`Could not Confirm Email Adress, please click on "RESEND CONFIRMATION EMAIL" within the App.`);
+        res.status(401).send(`Could not Confirm Email Adress, please hit RESEND within the App.`);
     }
 }
 
 // request password reset email
 const sendPasswordResetCode = async (req, res) => {
     try {
-        const {email} = req.body;
+        let {email} = req.body;
+
         checkPropertyExists(email, "email", "string", "send password reset code");
+
+        email = email.toLowerCase();
 
         const consumer = await consumerSchema.findOne({ email: email })
         if(!consumer)
-            throw new Error("Cannot send password reset code, user not found");
+            throw new Error("user not found");
 
         const code = await auth.getPWResetCode(consumer);
         await sendPasswordResetEmailTemplate(email, code);
-        res.status(200).send({"status": `success`, "message": `sent password reset code`});
+        res.status(200).send({"status": "success", "message": `sent password reset code`});
     } catch (err) {
         res.status(400).send({"status": `failure`, "message": err.message});
     }
@@ -127,17 +134,19 @@ const sendPasswordResetCode = async (req, res) => {
 
 const checkPasswordResetCode = async (req, res) => {
     try {
-        const {email, code} = req.body;
+        let {email, code} = req.body;
         checkPropertyExists(email, "email", "string", "check password reset code");
         checkPropertyExists(code, "email", "string", "check password reset code");
 
+        email = email.toLowerCase();
+
         const consumer = await consumerSchema.findOne({ email: email })
         if(!consumer)
-            throw new Error("Cannot check password reset code, user not found");
+            throw new Error("user not found");
 
         const is_correct = await auth.checkPWResetCode(email, code);
         if(!is_correct)
-            throw new Error("Cannot check password reset code, code is incorrect");
+            throw new Error("code is incorrect");
         
         const token = await auth.getConfirmationToken(consumer, true);
         res.status(200).send({"status": `success`, "message": `password reset code verified`, "token": token});
@@ -172,23 +181,24 @@ const resetPassword = async (req, res) => {
 }
 
 const checkPassword = (password) => {
-    if(password.length < 8)
-        throw new Error("Could not Sign Up consumer, password is less than 8 characters");
 
     if(! /^[\x20-\x7E]*$/.test(password))
-        throw new Error("Could not Sign Up consumer, password is not ASCII only");
-
-    if(! /[A-Z]/.test(password))
-        throw new Error("Could not Sign Up consumer, password does not have a upper case letter");
+        throw new Error("password is not ASCII only");
 
     if(! /[a-z]/.test(password))
-        throw new Error("Could not Sign Up consumer, password does not have a lower case letter");
+        throw new Error("password does not have a lower case letter");
+
+    if(! /[A-Z]/.test(password))
+        throw new Error("password does not have a upper case letter");
 
     if(! /[0-9]/.test(password))
-        throw new Error("Could not Sign Up consumer, password does not have a digit");
+        throw new Error("password does not have a digit");
 
     if(! /[^A-Za-z0-9]/.test(password))
-        throw new Error("Could not Sign Up consumer, password does not have a special character");
+        throw new Error("password does not have a special character");
+
+    if(password.length < 8)
+        throw new Error("password is less than 8 characters");
 }
 
 const checkEmail = (email) => {
@@ -196,8 +206,8 @@ const checkEmail = (email) => {
         throw new Error("Could not Sign Up consumer, email is not valid");
 }
 
-const getLoggedConsumer = async (req, res) => {
-    res.status(200).send({ "consumer": req.consumer })
+const getLoggedConsumer = (req, res) => {
+    res.status(200).send({ "status": "success", "consumer": req.consumer})
 }
 
 const deleteConsumer = async (req, res) => {

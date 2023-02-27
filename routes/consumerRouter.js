@@ -16,7 +16,7 @@ router.get('/send/confirmation/email', consumerService.sendEmailConfirmation);
 
 router.get('/confirm/email/:token', consumerService.checkEmailConfirmation);
 
-router.get('/send/passwordreset/code', consumerService.sendPasswordResetCode);
+router.post('/send/passwordreset/code', consumerService.sendPasswordResetCode);
 
 router.post('/check/passwordreset/code', consumerService.checkPasswordResetCode);
 
@@ -25,5 +25,8 @@ router.put('/reset/password', consumerService.resetPassword);
 router.use('/delete', auth.checkConsumerPrototypeAuth)
 router.delete('/delete', consumerService.deleteConsumer)
 
+// 0 = need email confirm, 1 = need to create account, 2 = good to go
+router.use('/is-confirmed', auth.checkConsumerConfirmedAuth);
+router.get('/is-confirmed', (req, res) => {return res.status(200).send({"status":"success", "message":"user is confirmed"})});
 
 module.exports = router;
