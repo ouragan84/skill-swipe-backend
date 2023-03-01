@@ -20,10 +20,10 @@ const checkInRange = (range, rangeName, lower, upper, action="create user") => {
 }
 
 const checkTags = (tags, tagsName) => {
-    checkPropertyExists(tags, tagsName, [String]);
+    checkPropertyExists(tags, tagsName, "object", "add " + tagsName);
     tags.forEach(tag => {
         if(!jobTags.includes(tag))
-            throw new Error("Could not create user, tag \'" + tag + "\' in " + tagsName + " is not valid");
+            throw new Error("Skill tag \'" + tag + "\' is is not valid");
     });
 }
 

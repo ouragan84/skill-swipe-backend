@@ -6,19 +6,19 @@ const userProfileSchema = new Schema({
     personalInformation:{
         firstName:{
             type: String,
-            required: true
+            required: false
         },
         lastName:{
             type: String,
-            required: true
+            required: false
         },
         DOB:{
             type: Date,
-            required: true
+            required: false
         },
         location:{
             type: [Number],
-            required: true
+            required: false
         },
         city:{
             type: String,
@@ -26,7 +26,7 @@ const userProfileSchema = new Schema({
         },
         description:{
             type: String,
-            required: true
+            required: false
         },
     },
     experience:[
@@ -43,15 +43,11 @@ const userProfileSchema = new Schema({
                 type: Number,
                 required: true
             },
-            isEducation:{
+            isCurrent:{
                 type: Boolean,
                 required: true
             },
-            isPresent:{
-                type: Boolean,
-                required: true
-            },
-            tags:{
+            skill:{
                 type: [String],
                 required: true
             }
@@ -59,7 +55,7 @@ const userProfileSchema = new Schema({
     ],
     profilePictureURL:{
         type: String,
-        required: true
+        required: false
     },
     interests:{
         maxDistance:{

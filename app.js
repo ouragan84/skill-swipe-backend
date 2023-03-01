@@ -32,6 +32,7 @@ app.use(cors({
 // add routes
 app.use('/', rootRoutes);
 app.use('/logs', logsRoutes);
+app.use('/user', userRoutes);
 app.use('/consumer', consumerRoutes);
 // app.use('/user', userRoutes);
 
