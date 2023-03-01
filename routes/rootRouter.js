@@ -1,5 +1,5 @@
 const express = require('express');
-var path = require('path');
+const path = require('path');
 
 const router = express.Router();
 
@@ -16,9 +16,9 @@ router.get('/about', (req, res) => { res.send('About us'); });
 // To get commit hash
 router.get('/git-commit', (req, res) => { res.send(git_commit_hash); });
 
-router.get('/terms-of-use', (req, res) => { res.sendFile(path.join(__dirname, '../public/terms-of-use.html'))});
+router.get('/terms-of-use', (req, res) => res.redirect('/static/terms-of-use.html'));
 
-router.get('/privacy-policy', (req, res) => { res.sendFile(path.join(__dirname, '../public/privacy-policy.html'))});
+router.get('/privacy-policy', (req, res) => res.redirect('/static/privacy-policy.html'));
 
 
 module.exports = router;
