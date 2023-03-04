@@ -5,18 +5,11 @@ const { default: mongoose } = require('mongoose');
 require('dotenv').config()
 
 // local imports
-<<<<<<< HEAD
 const mongoDBConnect = require('./hooks/mongoDBConnect');
 const logsRoutes = require('./routes/logsRouter');
 const rootRoutes = require('./routes/rootRouter');
 const userRoutes = require('./routes/userProfilesRouter');
 const consumerRoutes = require('./routes/consumerRouter');
-=======
-const mongoDBConnect = require('./mongoDBConnect');
-const logsController = require('./controllers/logsController');
-const imageController = require('./controllers/imageController');
-const rootController = require('./controllers/rootController');
->>>>>>> 4aebd3e (CRUD on images to s3 and mongo completed)
 
 // create app
 const app = express();
@@ -42,15 +35,6 @@ app.use('/', rootRoutes);
 app.use('/logs', logsRoutes);
 app.use('/user', userRoutes);
 app.use('/consumer', consumerRoutes);
-// app.use('/user', userRoutes);
-
-<<<<<<< HEAD
-=======
-// add routes from controllers
-app.use('/', rootController);
-app.use('/logs', logsController);
-app.use('/image', imageController);
->>>>>>> 4aebd3e (CRUD on images to s3 and mongo completed)
 
 // start listening for connections
 mongoose.connection.once('open', () => {
