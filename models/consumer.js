@@ -36,7 +36,7 @@ const consumerSchema = new Schema({
         type: Date,
         required: false
     },
-    consumerId:{
+    profileId:{
         type: mongoose.Types.ObjectId,
         required: false
     },

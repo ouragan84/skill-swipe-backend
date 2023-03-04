@@ -47,7 +47,7 @@ const userProfileSchema = new Schema({
                 type: Boolean,
                 required: true
             },
-            skill:{
+            skills:{
                 type: [String],
                 required: true
             }
@@ -56,6 +56,10 @@ const userProfileSchema = new Schema({
     profilePictureURL:{
         type: String,
         required: false
+    },
+    consumerId:{
+        type: mongoose.Types.ObjectId,
+        required: true
     },
     interests:{
         maxDistance:{

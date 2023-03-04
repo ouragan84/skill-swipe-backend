@@ -11,14 +11,14 @@ const getUserFromHeader = async (req) => {
         throw new Error("no consumer found");
     if( !consumer.isTypeUser)
         throw new Error("consumer is not of type user");
-    if(consumer.consumerId){
-        const current_user = userProfileSchema.findById(consumer.consumerId);
+    if(consumer.profileId){
+        const current_user = userProfileSchema.findById(consumer.profileId);
         if( current_user )
             return current_user
     }
-    const newUser = await userProfileSchema.create({});
-    consumer.consumerId = newUser._id;
-    await consumerSchema.findByIdAndUpdate(consumer._id, {consumerId: newUser._id});
+    const newUser = await userProfileSchema.create({consumerId: consumer._id});
+    consumer.profileId = newUser._id;
+    await consumerSchema.findByIdAndUpdate(consumer._id, {profileId: newUser._id});
     return newUser;
 }
 
@@ -88,7 +88,6 @@ const addExperience = async (req, res) => {
     try {
         const user = await getUserFromHeader(req);
         const {title, description, years, months, isCurrent, skills} = req.body;
-        const exp = {};
 
         checkPropertyExists(title, "title", "string", "add experience");
         checkPropertyExists(description, "description", "string", "add experience");
@@ -110,16 +109,25 @@ const addExperience = async (req, res) => {
         if(years >= age || years < 0)
             throw new Error("years is not valid")
 
-        user.experience.push(exp);
-        // await user.save();
+        exp = {
+            title: title,
+            description: description,
+            months: (years * 12 + months),
+            isCurrent: isCurrent,
+            skills: [...skills]
+        }
 
-        // await userProfileSchema.findByIdAndUpdate(user._id, user);
+        user.experience.push(exp);
+
+        await userProfileSchema.findByIdAndUpdate(user._id, user);
 
         return res.status(200).json({'status': 'success', 'message':'successfully added experience'});
     } catch (err) {
         res.status(400).json({'status': 'failure', 'message': err.message});
     }
 }
+
+
 
 // Experiences -> Title Description Years Months Current Skills
 // Prefs -> Maxdist HoursPerWeek[2] companySize[2] Remote Hybrid InPerson Flexibility 
@@ -175,7 +183,9 @@ const hello = async (req, res) => {
 }
 
 const getCityFromLocation = async (location) => {
-    checkPropertyExists(location, "location", [Number]);
+    checkPropertyExists(location, "location", "object");
+    checkPropertyExists(location[0], "latitude", "number");
+    checkPropertyExists(location[1], "longitude", "number");
 
     if(Math.abs(location[0]) > 90.0)
         throw new Error("Latitude is not in range [-90, 90]");
@@ -189,6 +199,22 @@ const getCityFromLocation = async (location) => {
         throw new Error("Error getting a city from location");
 
     return res.city;
+}
+
+const setPreferences = (req, res) => {
+
+}
+
+const setSkillPreferences = (req, res) => {
+
+}
+
+const setProfilePhoto = (req, res) => {
+
+}
+
+const setDescription = (req, res) => {
+    
 }
 
 module.exports = {setUserPersonalInformation, addExperience, setLocation}
