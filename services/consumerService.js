@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const path = require('path');
 
 const consumerSchema = require('../models/consumer');
 const {checkPropertyExists} = require('../hooks/propertyCheck');
@@ -104,10 +105,9 @@ const checkEmailConfirmation = async (req, res) => {
 
         await consumerSchema.findByIdAndUpdate(consumer._id, { $set: { isEmailConfrimed: true } });
         
-        res.status(200).send(`Thank you for confirming your email adress! Please check back in the App for the next steps in creating your account.`);
+        res.status(200).redirect('/static/confirm.html');
     } catch (err) {
-        console.log(err.message);
-        res.status(401).send(`Could not Confirm Email Adress, please hit RESEND within the App.`);
+        res.status(401).redirect('/static/resend.html');
     }
 }
 

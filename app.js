@@ -28,6 +28,7 @@ app.use(express.json())
 app.use(cors({
     origin: '*' 
 }));
+app.use('/static', express.static('public'))
 
 // add routes
 app.use('/', rootRoutes);
