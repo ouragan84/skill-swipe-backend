@@ -53,20 +53,22 @@ const userProfileSchema = new Schema({
             }
         }
     ],
-    profilePictureURL:{
-        type: String,
-        required: false
+    profilePicture:{
+        name:{
+            type: String,
+            required: false
+        }
     },
     consumerId:{
         type: mongoose.Types.ObjectId,
         required: true
     },
-    interests:{
+    preferences:{
         maxDistance:{
             type: Number,
             required: false
         },
-        tags:{
+        skills:{
             type: [String],
             required: false
         },
@@ -78,11 +80,15 @@ const userProfileSchema = new Schema({
             type: [Number],
             required: false
         },
-        isRemoteOnly:{
+        isInPerson:{
             type: Boolean,
             default: false
         },
-        isRemoteOnly:{
+        isHybrid:{
+            type: Boolean,
+            default: false
+        },
+        isRemote:{
             type: Boolean,
             required: false
         },

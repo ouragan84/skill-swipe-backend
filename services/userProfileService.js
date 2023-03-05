@@ -4,6 +4,8 @@ const userProfileSchema = require('../models/userProfile');
 const consumerSchema = require('../models/consumer');
 
 const {checkPropertyExists, checkInRange, checkTags} = require('../hooks/propertyCheck');
+const {uploadImage, updateImage, getImage, deleteImage} = require('../hooks/imageHandler');
+const { update } = require('../models/userProfile');
 
 const getUserFromHeader = async (req) => {
     const consumer = req.consumer;
@@ -127,61 +129,6 @@ const addExperience = async (req, res) => {
     }
 }
 
-
-
-// Experiences -> Title Description Years Months Current Skills
-// Prefs -> Maxdist HoursPerWeek[2] companySize[2] Remote Hybrid InPerson Flexibility 
-// Prefs -> Skills
-// ProfilePicture Description
-// CheckFinal
-
-
-
-const hello = async (req, res) => {
-    try{
-        const {user} = req.body;
-
-        checkPropertyExists(user, "user", Object);
-        checkPropertyExists(user.personalInformation, "personalInformation", Object);
-        checkPropertyExists(user.personalInformation.firstName, "firstName", String);
-        checkPropertyExists(user.personalInformation.lastName, "lastName", String);
-        checkPropertyExists(user.personalInformation.DOB, "DOB", String);
-        user.personalInformation.DOB = Date(user.personalInformation.DOB);
-        if(!user.personalInformation.DOB) throw new Error("Could not create user, DOB could not be parsed");
-        checkPropertyExists(user.personalInformation.description, "description", String);
-        user.personalInformation.city = await getCityFromLocation(user.personalInformation.location);
-
-        checkPropertyExists(user.experience, "experience", [Object]);
-        user.experience.forEach(exp => {
-            checkPropertyExists(exp.title, "experience title", String);
-            checkPropertyExists(exp.description, "experience description", String);
-            checkPropertyExists(exp.months, "experience months", Number);
-            checkPropertyExists(exp.isEducation, "experience isEducation", Boolean);
-            checkPropertyExists(exp.isPresent, "experience isPresent", Boolean); 
-            checkTags(exp.tags, "experience tags")
-        });
-
-        checkPropertyExists(user.interests, "interests", Object);
-        checkPropertyExists(user.interests.maxDistance, "maxDistance", Number);
-        checkTags(user.interests.tags, "interest tags");
-        checkInRange(user.interests.hoursPerWeek, "hoursPerWeek", 1, 60); // TODO: Discuss those numbers
-        checkInRange(user.interests.hoursFlexibility, "hoursFlexibility", 1, 100); // TODO: Discuss those numbers
-        checkInRange(user.interests.companySize, "companySize", 1, 100); // TODO: Discuss those numbers
-        checkPropertyExists(user.interests.isRemoteOnly, "isRemoteOnly", Boolean);
-        
-        user.dateCreated = user.dateLastModified = Date.now();
-
-        // TODO: change that
-        user.profilePictureURL = "https://image-cdn.essentiallysports.com/wp-content/uploads/dwayne-johnson-3-4.jpg?width=900";
-
-        const newUser = await UserProfiles.create(user);
-
-        return res.status(201).json({'message':'Success creating user'});
-    }catch (error){
-        res.status(400).json({'message':error.message});
-    }
-}
-
 const getCityFromLocation = async (location) => {
     checkPropertyExists(location, "location", "object");
     checkPropertyExists(location[0], "latitude", "number");
@@ -201,20 +148,161 @@ const getCityFromLocation = async (location) => {
     return res.city;
 }
 
-const setPreferences = (req, res) => {
+const setPreferences = async (req, res) => {
+    try {
+        const user = await getUserFromHeader(req);
+        const {maxDistance, hoursPerWeek, hoursFlexibility, companySize, isInPerson, isHybrid, isRemote} = req.body;
+
+        checkPropertyExists(maxDistance, "maxDistance", "number");
+        checkInRange(hoursPerWeek, "hoursPerWeek", 5, 40);
+        checkInRange(hoursFlexibility, "hoursFlexibility", 1, 3); // 1 = rigid, 2 = normal, 3 = flexible
+        checkInRange(companySize, "companySize", 1, 100); // 1 = 1, 2 = 10, 3 = 50, 4 = 100, 5 = 500, 6 = inf
+        checkPropertyExists(isInPerson, "isInPerson", "boolean");
+        checkPropertyExists(isHybrid, "isHybrid", "boolean");
+        checkPropertyExists(isRemote, "isRemote", "boolean");
+
+        user.preferences.maxDistance = maxDistance;
+        user.preferences.hoursPerWeek = hoursPerWeek;
+        user.preferences.hoursFlexibility = hoursFlexibility;
+        user.preferences.companySize = companySize;
+        user.preferences.isInPerson = isInPerson;
+        user.preferences.isHybrid = isHybrid;
+        user.preferences.isRemote = isRemote;
+
+        await userProfileSchema.findByIdAndUpdate(user._id, user);   
+
+        return res.status(200).json({'status': 'success', 'message':'successfully set location'});
+    } catch (err) {
+        res.status(400).json({'status': 'failure', 'message': err.message});
+    }
+}
+
+const setSkillPreferences = async (req, res) => {
+    try {
+        const user = await getUserFromHeader(req);
+        const {skills} = req.body;
+
+        checkTags(skills, "preference skill tags");
+        if(skills.length <= 0)
+            throw new Error("Please add at least one skill tag")
+
+        user.preferences.skills = skills;
+
+        await userProfileSchema.findByIdAndUpdate(user._id, user);   
+
+        return res.status(200).json({'status': 'success', 'message':'successfully set preference skills'});
+    } catch (err) {
+        res.status(400).json({'status': 'failure', 'message': err.message});
+    }
+}
+
+const setProfilePhoto = async (req, res) => {
+    try {
+        const user = await getUserFromHeader(req);
+
+        console.log(req)
+        console.log('-------')
+        console.log(req.headers)
+        console.log('-------')
+        console.log(req.content)
+        console.log('-------')
+        console.log(req.body)
+
+
+        const imageName = await updateImage(user.profilePicture.name, req.body, req.headers, 512, 512);
+
+        user.profilePicture.name = imageName;
+
+        console.log("success", imageName)
+
+        await userProfileSchema.findByIdAndUpdate(user._id, user);   
+
+        return res.status(200).json({'status': 'success', 'message':'successfully set preference skills'});
+    } catch (err) {
+        res.status(400).json({'status': 'failure', 'message': err.message});
+    }
+}
+
+const getProfilePhoto = async (req, res) => {
+    try {
+        const {name} = req.params;
+
+        console.log(name)
+
+        const url = await getImage(name);
+        
+        return res.status(200).json({'status': 'success', 'message':'successfully set preference skills', 'pictureUrl': url});
+    } catch (err) {
+        res.status(400).json({'status': 'failure', 'message': err.message});
+    }
+}
+
+const setDescription = async (req, res) => {
+    try {
+        const user = await getUserFromHeader(req);
+        const {description} = req.body;
+
+        checkPropertyExists(description, "description", "string");
+
+        user.personalInformation.description = description;
+
+        await userProfileSchema.findByIdAndUpdate(user._id, user);   
+
+        return res.status(200).json({'status': 'success', 'message':'successfully set location'});
+    } catch (err) {
+        res.status(400).json({'status': 'failure', 'message': err.message});
+    }
+}
+
+const completeUser = async (req, res) => {
+    try {
+        const user = await getUserFromHeader(req);
+
+        checkPropertyExists(user.personalInformation.firstName, "firstName", "string");
+        checkPropertyExists(user.personalInformation.lastName, "lastName", "string");
+        checkPropertyExists(user.personalInformation.DOB, "DOB", "date");
+        checkPropertyExists(user.personalInformation.location, "location", "object");
+        checkPropertyExists(user.personalInformation.firstName, "city", "string");
+        await getCityFromLocation(location);
+        checkPropertyExists(user.personalInformation.firstName, "description", "string");
+
+        checkPropertyExists(user.experience, "experiences", "object")
+        user.experience.forEach(exp => {
+            checkPropertyExists(exp.title, "title", "string");
+            checkPropertyExists(exp.description, "description", "string");
+            checkPropertyExists(exp.years, "years", "number");
+            checkPropertyExists(exp.months, "months", "number");
+            checkPropertyExists(exp.isCurrent, "isCurrent", "boolean");
+            checkTags(skills, "skill tags");
+        });
+
+        checkPropertyExists(user.profilePicture, "profilePicture", "object")
+        checkPropertyExists(user.profilePicture.name, "profilePicture name", "string")
+
+        checkPropertyExists(user.preferences, "preferences", "object")
+        checkPropertyExists(user.preferences.maxDistance, "maxDistance", "number");
+        checkInRange(user.preferences.hoursPerWeek, "hoursPerWeek", 5, 40);
+        checkInRange(user.preferences.hoursFlexibility, "hoursFlexibility", 1, 3); // 1 = rigid, 2 = normal, 3 = flexible
+        checkInRange(user.preferences.companySize, "companySize", 1, 100); // 1 = 1, 2 = 10, 3 = 50, 4 = 100, 5 = 500, 6 = inf
+        checkPropertyExists(user.preferences.isInPerson, "isInPerson", "boolean");
+        checkPropertyExists(user.preferences.isHybrid, "isHybrid", "boolean");
+        checkPropertyExists(user.preferences.isRemote, "isRemote", "boolean");
+        checkTags(user.preferences.skills, "preference skill tags");
+
+        const consumer = req.consumer;
+        consumer.isAccountComplete = true;
+
+        await consumerSchema.findByIdAndUpdate(consumer._id, {profileId: newUser._id});
+
+        return res.status(200).json({'status': 'success', 'message':'user is complete'});
+    } catch (err) {
+        res.status(400).json({'status': 'failure', 'message': err.message});
+    }
+}
+
+const getPublicInfo = async () => {
 
 }
 
-const setSkillPreferences = (req, res) => {
-
-}
-
-const setProfilePhoto = (req, res) => {
-
-}
-
-const setDescription = (req, res) => {
-    
-}
-
-module.exports = {setUserPersonalInformation, addExperience, setLocation}
+module.exports = {setUserPersonalInformation, addExperience, setLocation, setPreferences, setSkillPreferences, 
+    setProfilePhoto, setDescription, getProfilePhoto, getPublicInfo, completeUser}

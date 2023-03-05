@@ -1,6 +1,7 @@
 // library imports
 const express = require('express');
 const cors = require('cors');
+const bodyParser = require('body-parser');
 const { default: mongoose } = require('mongoose');
 require('dotenv').config()
 
@@ -29,6 +30,18 @@ app.use(cors({
     origin: '*' 
 }));
 app.use('/static', express.static('public'))
+app.use(bodyParser.raw({
+    type: 'image/png',
+    limit: '10mb'
+  }));
+app.use(bodyParser.raw({
+    type: 'image/jpeg',
+    limit: '10mb'
+  }));
+app.use(bodyParser.raw({
+    type: 'image/gif',
+    limit: '10mb'
+  }));
 
 // add routes
 app.use('/', rootRoutes);
