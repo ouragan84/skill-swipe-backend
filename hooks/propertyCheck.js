@@ -7,7 +7,7 @@ const checkPropertyExists = (property, propertyName, expectedType, action="creat
 
 const checkInRange = (range, rangeName, lower, upper, action="create user") => {
     checkPropertyExists(range, "range " + rangeName, "object", action)
-    if(range.length != 2) //TODO: add action to error message
+    if(range.length >= 2) //TODO: add action to error message
         throw new Error(`Could not create user, range ${rangeName} did not have 2 values as expected.`);
     if(range[0] < lower)
         throw new Error("Could not create user, lower bound of range " + rangeName + " was too low. Lower bound is " + lower + " at minimum");

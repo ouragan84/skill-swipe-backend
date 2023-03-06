@@ -5,7 +5,7 @@ const consumerSchema = require('../models/consumer');
 
 const {checkPropertyExists, checkInRange, checkTags} = require('../hooks/propertyCheck');
 const {uploadImage, updateImage, getImage, deleteImage} = require('../hooks/imageHandler');
-const { update } = require('../models/userProfile');
+const {getCityFromLocation} = require('../hooks/locationHandler');
 
 const getUserFromHeader = async (req) => {
     const consumer = req.consumer;
@@ -14,12 +14,13 @@ const getUserFromHeader = async (req) => {
     if( !consumer.isTypeUser)
         throw new Error("consumer is not of type user");
     if(consumer.profileId){
-        const current_user = userProfileSchema.findById(consumer.profileId);
+        const current_user = await userProfileSchema.findById(consumer.profileId);
         if( current_user )
             return current_user
     }
     const newUser = await userProfileSchema.create({consumerId: consumer._id});
     consumer.profileId = newUser._id;
+    
     await consumerSchema.findByIdAndUpdate(consumer._id, {profileId: newUser._id});
     return newUser;
 }
@@ -50,6 +51,9 @@ const setUserPersonalInformation = async (req, res) => {
         user.personalInformation.firstName = firstName;
         user.personalInformation.lastName = lastName;
         user.personalInformation.DOB = DateOfBirth;
+
+        if(!user.experience)
+            user.experience = [];
 
         await userProfileSchema.findByIdAndUpdate(user._id, user);   
 
@@ -91,33 +95,7 @@ const addExperience = async (req, res) => {
         const user = await getUserFromHeader(req);
         const {title, description, years, months, isCurrent, skills} = req.body;
 
-        checkPropertyExists(title, "title", "string", "add experience");
-        checkPropertyExists(description, "description", "string", "add experience");
-        checkPropertyExists(years, "years", "number", "add experience");
-        checkPropertyExists(months, "months", "number", "add experience");
-        checkPropertyExists(isCurrent, "isCurrent", "boolean", "add experience");
-        checkTags(skills, "skill tags");
-        if(skills.length > 5)
-            throw new Error("Too many skill tags added")
-        if(skills.length <= 0)
-            throw new Error("Please add at least one skill tag")
-
-
-        const age = getAge(new Date(user.personalInformation.DOB));
-        
-
-        if(months >= 12 || months < 0)
-            throw new Error("months is not valid")
-        if(years >= age || years < 0)
-            throw new Error("years is not valid")
-
-        exp = {
-            title: title,
-            description: description,
-            months: (years * 12 + months),
-            isCurrent: isCurrent,
-            skills: [...skills]
-        }
+        const exp = ckeckExperienceValid(title, description, years, months, isCurrent, skills);
 
         user.experience.push(exp);
 
@@ -129,23 +107,75 @@ const addExperience = async (req, res) => {
     }
 }
 
-const getCityFromLocation = async (location) => {
-    checkPropertyExists(location, "location", "object");
-    checkPropertyExists(location[0], "latitude", "number");
-    checkPropertyExists(location[1], "longitude", "number");
+const editExperience = async () => {
+    try {
+        const user = await getUserFromHeader(req);
+        const {index} = req.params;
+        const {title, description, years, months, isCurrent, skills} = req.body;
 
-    if(Math.abs(location[0]) > 90.0)
-        throw new Error("Latitude is not in range [-90, 90]");
-    if(Math.abs(location[1]) > 180.0)
-        throw new Error("Latitude is not in range [-180, 180]");
+        checkPropertyExists(index, "index", "number", "edit experience")
 
-    const res = await fetch("https://api.bigdatacloud.net/data/reverse-geocode-client?latitude="+
-    location[0]+"&longitude="+location[1]+"&localityLanguage=en").then(res => res.json());
+        if(index >= user.experience.length)
+            throw new Error("Experience does not exist");
 
-    if(!res.city) 
-        throw new Error("Error getting a city from location");
+        const exp = ckeckExperienceValid(title, description, years, months, isCurrent, skills);
 
-    return res.city;
+        user.experience[index] = exp;
+
+        await userProfileSchema.findByIdAndUpdate(user._id, user);
+
+        return res.status(200).json({'status': 'success', 'message':'successfully editted experience'});
+    } catch (err) {
+        res.status(400).json({'status': 'failure', 'message': err.message});
+    }
+}
+
+const deleteExperience = async () => {
+    try {
+        const user = await getUserFromHeader(req);
+        const {index} = req.params;
+
+        checkPropertyExists(index, "index", "number", "delete experience")
+
+        if(index >= user.experience.length)
+            throw new Error("Experience does not exist");
+
+        user.experience.pop(index);
+
+        await userProfileSchema.findByIdAndUpdate(user._id, user);
+
+        return res.status(200).json({'status': 'success', 'message':'successfully deleted experience'});
+    } catch (err) {
+        res.status(400).json({'status': 'failure', 'message': err.message});
+    }
+}
+
+const ckeckExperienceValid = (title, description, years, months, isCurrent, skills) => {
+    checkPropertyExists(title, "title", "string", "add experience");
+    checkPropertyExists(description, "description", "string", "add experience");
+    checkPropertyExists(years, "years", "number", "add experience");
+    checkPropertyExists(months, "months", "number", "add experience");
+    checkPropertyExists(isCurrent, "isCurrent", "boolean", "add experience");
+    checkTags(skills, "skill tags");
+    if(skills.length > 5)
+        throw new Error("Too many skill tags added")
+    if(skills.length <= 0)
+        throw new Error("Please add at least one skill tag")
+
+    const age = getAge(new Date(user.personalInformation.DOB));
+
+    if(months >= 12 || months < 0)
+        throw new Error("months is not valid")
+    if(years >= age || years < 0)
+        throw new Error("years is not valid")
+
+    return {
+        title: title,
+        description: description,
+        months: (years * 12 + months),
+        isCurrent: isCurrent,
+        skills: [...skills]
+    }
 }
 
 const setPreferences = async (req, res) => {
@@ -154,7 +184,7 @@ const setPreferences = async (req, res) => {
         const {maxDistance, hoursPerWeek, hoursFlexibility, companySize, isInPerson, isHybrid, isRemote} = req.body;
 
         checkPropertyExists(maxDistance, "maxDistance", "number");
-        checkInRange(hoursPerWeek, "hoursPerWeek", 5, 40);
+        checkInRange(hoursPerWeek, "hoursPerWeek", 1, 40);
         checkInRange(hoursFlexibility, "hoursFlexibility", 1, 3); // 1 = rigid, 2 = normal, 3 = flexible
         checkInRange(companySize, "companySize", 1, 100); // 1 = 1, 2 = 10, 3 = 50, 4 = 100, 5 = 500, 6 = inf
         checkPropertyExists(isInPerson, "isInPerson", "boolean");
@@ -200,24 +230,13 @@ const setProfilePhoto = async (req, res) => {
     try {
         const user = await getUserFromHeader(req);
 
-        console.log(req)
-        console.log('-------')
-        console.log(req.headers)
-        console.log('-------')
-        console.log(req.content)
-        console.log('-------')
-        console.log(req.body)
-
-
         const imageName = await updateImage(user.profilePicture.name, req.body, req.headers, 512, 512);
 
         user.profilePicture.name = imageName;
 
-        console.log("success", imageName)
-
         await userProfileSchema.findByIdAndUpdate(user._id, user);   
 
-        return res.status(200).json({'status': 'success', 'message':'successfully set preference skills'});
+        return res.status(200).json({'status': 'success', 'message':'successfully set profile picture'});
     } catch (err) {
         res.status(400).json({'status': 'failure', 'message': err.message});
     }
@@ -225,13 +244,11 @@ const setProfilePhoto = async (req, res) => {
 
 const getProfilePhoto = async (req, res) => {
     try {
-        const {name} = req.params;
+        const user = await getUserFromHeader(req);
 
-        console.log(name)
-
-        const url = await getImage(name);
+        const url = await getImage(user.profilePicture.name);
         
-        return res.status(200).json({'status': 'success', 'message':'successfully set preference skills', 'pictureUrl': url});
+        return res.status(200).json({'status': 'success', 'message':'successfully got picture url', 'pictureUrl': url});
     } catch (err) {
         res.status(400).json({'status': 'failure', 'message': err.message});
     }
@@ -261,16 +278,14 @@ const completeUser = async (req, res) => {
         checkPropertyExists(user.personalInformation.firstName, "firstName", "string");
         checkPropertyExists(user.personalInformation.lastName, "lastName", "string");
         checkPropertyExists(user.personalInformation.DOB, "DOB", "date");
-        checkPropertyExists(user.personalInformation.location, "location", "object");
         checkPropertyExists(user.personalInformation.firstName, "city", "string");
-        await getCityFromLocation(location);
+        await getCityFromLocation(user.personalInformation.location);
         checkPropertyExists(user.personalInformation.firstName, "description", "string");
 
         checkPropertyExists(user.experience, "experiences", "object")
         user.experience.forEach(exp => {
             checkPropertyExists(exp.title, "title", "string");
             checkPropertyExists(exp.description, "description", "string");
-            checkPropertyExists(exp.years, "years", "number");
             checkPropertyExists(exp.months, "months", "number");
             checkPropertyExists(exp.isCurrent, "isCurrent", "boolean");
             checkTags(skills, "skill tags");
@@ -292,7 +307,7 @@ const completeUser = async (req, res) => {
         const consumer = req.consumer;
         consumer.isAccountComplete = true;
 
-        await consumerSchema.findByIdAndUpdate(consumer._id, {profileId: newUser._id});
+        await consumerSchema.findByIdAndUpdate(consumer._id, consumer);
 
         return res.status(200).json({'status': 'success', 'message':'user is complete'});
     } catch (err) {
@@ -300,9 +315,19 @@ const completeUser = async (req, res) => {
     }
 }
 
-const getPublicInfo = async () => {
+const getPublicInfo = async (id) => {
+    const user = await userProfileSchema.findById(id);
+    if( user ){
+        const { [DOB, location]: omitted, ...personalInformation } = user.personalInformation; // ommit DOB and location
 
+        return {
+            personalInformation,
+            profilePicture: user.profilePicture,
+            experience: user.experience
+        }
+    }
+    throw new Error("User does not exist");
 }
 
 module.exports = {setUserPersonalInformation, addExperience, setLocation, setPreferences, setSkillPreferences, 
-    setProfilePhoto, setDescription, getProfilePhoto, getPublicInfo, completeUser}
+    setProfilePhoto, setDescription, getProfilePhoto, getPublicInfo, completeUser, editExperience, deleteExperience}

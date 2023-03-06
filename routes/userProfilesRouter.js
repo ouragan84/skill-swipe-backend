@@ -10,6 +10,12 @@ router.post('/set/personal-info', userProfileService.setUserPersonalInformation)
 router.use('/add/experience', auth.checkConsumerConfirmedAuth);
 router.post('/add/experience', userProfileService.addExperience);
 
+router.use('/edit/experience', auth.checkConsumerConfirmedAuth);
+router.put('/edit/experience/:index', userProfileService.editExperience);
+
+router.use('/delete/experience', auth.checkConsumerConfirmedAuth);
+router.delete('/delete/experience/:index', userProfileService.deleteExperience);
+
 router.use('/set/location', auth.checkConsumerConfirmedAuth);
 router.post('/set/location', userProfileService.setLocation);
 
@@ -26,9 +32,11 @@ router.use('/set/description', auth.checkConsumerConfirmedAuth);
 router.post('/set/description', userProfileService.setDescription);
 
 router.use('/get/profile-picture', auth.checkConsumerConfirmedAuth);
-router.get('/get/profile-picture/:name', userProfileService.getProfilePhoto);
+router.get('/get/profile-picture', userProfileService.getProfilePhoto);
 
-router.use('/get/check-complete', auth.checkConsumerConfirmedAuth);
-router.get('/get/check-complete', userProfileService.completeUser);
+router.use('/check-complete', auth.checkConsumerConfirmedAuth);
+router.get('/check-complete', userProfileService.completeUser);
+
+router.get('/get/public-info/:id', userProfileService.getPublicInfo)
 
 module.exports = router;

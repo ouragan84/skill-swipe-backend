@@ -23,9 +23,8 @@ const s3Client = new S3Client({
 const uploadImage = async (body, headers, width, height) => {
   // const userJSON =await JSON.parse(formData.image);
   const contentType = headers['content-type'];
-  const imageType = contentType.split('/')[1];
 
-  if (!['png', 'jpeg', 'gif'].includes(imageType))
+  if (!['image/png', 'image/jpeg', 'image/gif'].includes(contentType))
     throw new Error('Image format not accepted, must be png, gif, or jpeg');
 
   const imageName = generateFileName()

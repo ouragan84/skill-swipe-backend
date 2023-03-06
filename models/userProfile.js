@@ -96,7 +96,43 @@ const userProfileSchema = new Schema({
             type: [Number],
             required: false
         },
-    }
+    },
+    applied:[
+        {
+            position:{
+                type: mongoose.Types.ObjectId,
+                required: false
+            },
+            time:{
+                type: Date,
+                required: false
+            }
+        }
+    ],
+    matched:[
+        {
+            position:{
+                type: mongoose.Types.ObjectId,
+                required: false
+            },
+            time:{
+                type: Date,
+                required: false
+            }
+        }
+    ],
+    rejected:[
+        {
+            position:{
+                type: mongoose.Types.ObjectId,
+                required: false
+            },
+            time:{
+                type: Date,
+                required: false
+            }
+        }
+    ],
 })
 
 module.exports = mongoose.model('UserProfile', userProfileSchema)
