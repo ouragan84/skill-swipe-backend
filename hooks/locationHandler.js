@@ -1,3 +1,5 @@
+const {checkPropertyExists} = require('./propertyCheck')
+
 const getCityFromLocation = async (location) => {
     checkPropertyExists(location, "location", "object");
     checkPropertyExists(location[0], "latitude", "number");

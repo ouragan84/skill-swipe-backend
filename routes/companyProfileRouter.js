@@ -26,10 +26,16 @@ router.use('/set/position-picture', auth.checkConsumerConfirmedAuth);
 router.post('/set/position-picture/:index', companyProfileService.setPositionPhoto);
 
 router.use('/get/position-picture', auth.checkConsumerConfirmedAuth);
-router.get('/get/company-picture/:index', companyProfileService.getPositionPhoto);
+router.get('/get/position-picture/:index', companyProfileService.getPositionPhoto);
 
-router.use('/get/check-complete', auth.checkConsumerConfirmedAuth);
-router.get('/get/check-complete', companyProfileService.completeCompany);
+router.use('/check-complete', auth.checkConsumerConfirmedAuth);
+router.get('/check-complete', companyProfileService.completeCompany);
+
+router.use('/get/complete-info', auth.checkConsumerConfirmedAuth);
+router.get('/get/complete-info', companyProfileService.getCompleteInfo);
+
+router.use('/get/complete-position-info', auth.checkConsumerConfirmedAuth);
+router.get('/get/complete-position-info/:index', companyProfileService.getCompletePositionInfo);
 
 router.get('/get/public-info/:id', companyProfileService.getPublicInfo)
 

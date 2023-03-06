@@ -20,7 +20,7 @@ const getUserFromHeader = async (req) => {
     }
     const newUser = await userProfileSchema.create({consumerId: consumer._id});
     consumer.profileId = newUser._id;
-    
+
     await consumerSchema.findByIdAndUpdate(consumer._id, {profileId: newUser._id});
     return newUser;
 }
@@ -95,7 +95,7 @@ const addExperience = async (req, res) => {
         const user = await getUserFromHeader(req);
         const {title, description, years, months, isCurrent, skills} = req.body;
 
-        const exp = ckeckExperienceValid(title, description, years, months, isCurrent, skills);
+        const exp = ckeckExperienceValid(user, title, description, years, months, isCurrent, skills);
 
         user.experience.push(exp);
 
@@ -103,14 +103,15 @@ const addExperience = async (req, res) => {
 
         return res.status(200).json({'status': 'success', 'message':'successfully added experience'});
     } catch (err) {
+        console.error(err);
         res.status(400).json({'status': 'failure', 'message': err.message});
     }
 }
 
-const editExperience = async () => {
+const editExperience = async (req, res) => {
     try {
         const user = await getUserFromHeader(req);
-        const {index} = req.params;
+        const index = Number(req.params.index);
         const {title, description, years, months, isCurrent, skills} = req.body;
 
         checkPropertyExists(index, "index", "number", "edit experience")
@@ -118,7 +119,7 @@ const editExperience = async () => {
         if(index >= user.experience.length)
             throw new Error("Experience does not exist");
 
-        const exp = ckeckExperienceValid(title, description, years, months, isCurrent, skills);
+        const exp = ckeckExperienceValid(user, title, description, years, months, isCurrent, skills);
 
         user.experience[index] = exp;
 
@@ -130,17 +131,17 @@ const editExperience = async () => {
     }
 }
 
-const deleteExperience = async () => {
+const deleteExperience = async (req, res) => {
     try {
         const user = await getUserFromHeader(req);
-        const {index} = req.params;
+        const index = Number(req.params.index);
 
         checkPropertyExists(index, "index", "number", "delete experience")
 
         if(index >= user.experience.length)
             throw new Error("Experience does not exist");
 
-        user.experience.pop(index);
+        user.experience.splice(index, 1);
 
         await userProfileSchema.findByIdAndUpdate(user._id, user);
 
@@ -150,7 +151,7 @@ const deleteExperience = async () => {
     }
 }
 
-const ckeckExperienceValid = (title, description, years, months, isCurrent, skills) => {
+const ckeckExperienceValid = (user, title, description, years, months, isCurrent, skills) => {
     checkPropertyExists(title, "title", "string", "add experience");
     checkPropertyExists(description, "description", "string", "add experience");
     checkPropertyExists(years, "years", "number", "add experience");
@@ -201,7 +202,7 @@ const setPreferences = async (req, res) => {
 
         await userProfileSchema.findByIdAndUpdate(user._id, user);   
 
-        return res.status(200).json({'status': 'success', 'message':'successfully set location'});
+        return res.status(200).json({'status': 'success', 'message':'successfully set preferences'});
     } catch (err) {
         res.status(400).json({'status': 'failure', 'message': err.message});
     }
@@ -277,7 +278,7 @@ const completeUser = async (req, res) => {
 
         checkPropertyExists(user.personalInformation.firstName, "firstName", "string");
         checkPropertyExists(user.personalInformation.lastName, "lastName", "string");
-        checkPropertyExists(user.personalInformation.DOB, "DOB", "date");
+        checkPropertyExists(user.personalInformation.DOB, "DOB", "object");
         checkPropertyExists(user.personalInformation.firstName, "city", "string");
         await getCityFromLocation(user.personalInformation.location);
         checkPropertyExists(user.personalInformation.firstName, "description", "string");
@@ -288,11 +289,11 @@ const completeUser = async (req, res) => {
             checkPropertyExists(exp.description, "description", "string");
             checkPropertyExists(exp.months, "months", "number");
             checkPropertyExists(exp.isCurrent, "isCurrent", "boolean");
-            checkTags(skills, "skill tags");
+            checkTags(exp.skills, "skill tags");
         });
 
-        checkPropertyExists(user.profilePicture, "profilePicture", "object")
-        checkPropertyExists(user.profilePicture.name, "profilePicture name", "string")
+        // checkPropertyExists(user.profilePicture, "profilePicture", "object")
+        // checkPropertyExists(user.profilePicture.name, "profilePicture name", "string")
 
         checkPropertyExists(user.preferences, "preferences", "object")
         checkPropertyExists(user.preferences.maxDistance, "maxDistance", "number");
@@ -311,6 +312,7 @@ const completeUser = async (req, res) => {
 
         return res.status(200).json({'status': 'success', 'message':'user is complete'});
     } catch (err) {
+        // console.error(err)
         res.status(400).json({'status': 'failure', 'message': err.message});
     }
 }
@@ -318,7 +320,8 @@ const completeUser = async (req, res) => {
 const getPublicInfo = async (id) => {
     const user = await userProfileSchema.findById(id);
     if( user ){
-        const { [DOB, location]: omitted, ...personalInformation } = user.personalInformation; // ommit DOB and location
+        console.log( user.personalInformation)
+        const { DOB, location, ...personalInformation } = user.personalInformation; // ommit DOB and location
 
         return {
             personalInformation,
@@ -329,5 +332,15 @@ const getPublicInfo = async (id) => {
     throw new Error("User does not exist");
 }
 
-module.exports = {setUserPersonalInformation, addExperience, setLocation, setPreferences, setSkillPreferences, 
+const getCompleteInfo = async (req, res) => {
+    try {
+        const user = await getUserFromHeader(req);
+
+        return res.status(200).json({'status': 'success', 'message':'successfully got public user info', 'user': user});
+    } catch (err) {
+        res.status(400).json({'status': 'failure', 'message': err.message});
+    }
+}
+
+module.exports = {setUserPersonalInformation, addExperience, setLocation, setPreferences, setSkillPreferences, getCompleteInfo,
     setProfilePhoto, setDescription, getProfilePhoto, getPublicInfo, completeUser, editExperience, deleteExperience}

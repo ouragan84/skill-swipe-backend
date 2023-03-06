@@ -31,8 +31,11 @@ const sendMail = (to, subject, text, html=null) => {
   });
 }
 
+// TODO: Issue with outlook security, added email adress in subject to avoid email blocked. 
+// Might want to change that and look for another mailing service.
+
 const sendConfirmationEmailTemplate = (to, link) => {
-  sendMail(to, "Skill Swipe Email Confirmation", `Skill Swipe Email Confirmation: Please paste this link into your browser ${link}`, 
+  sendMail(to, `Skill Swipe Email Confirmation --- ${to}`, `Skill Swipe Email Confirmation: Please paste this link into your browser: ${link}`, 
   `
     <style type="text/css">
     /**
@@ -284,7 +287,7 @@ const sendConfirmationEmailTemplate = (to, link) => {
 }
 
 const sendPasswordResetEmailTemplate = (to, code) => {
-  sendMail(to, "Skill Swipe Password Reset", `Skill Swipe Password Reset: Please paste this code into the app ${code}`, `
+  sendMail(to, `Skill Swipe Password Reset --- ${to}`, `Skill Swipe Password Reset: Please paste this code into the app ${code}`, `
   <style type="text/css">
   /**
    * Google webfonts. Recommended to include the .woff version for cross-client compatibility.

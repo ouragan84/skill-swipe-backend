@@ -37,6 +37,17 @@ router.get('/get/profile-picture', userProfileService.getProfilePhoto);
 router.use('/check-complete', auth.checkConsumerConfirmedAuth);
 router.get('/check-complete', userProfileService.completeUser);
 
-router.get('/get/public-info/:id', userProfileService.getPublicInfo)
+router.use('/get/complete-info', auth.checkConsumerConfirmedAuth);
+router.get('/get/complete-info', userProfileService.getCompleteInfo);
+
+router.get('/get/public-info/:id', async (req,res) => {
+    try {
+        const {id} = req.params
+        const user = await userProfileService.getPublicInfo(id);
+        return res.status(200).json({'status': 'success', 'message':'successfully got picture url', 'user': user});
+    } catch (err) {
+        res.status(400).json({'status': 'failure', 'message': err.message});
+    }
+})
 
 module.exports = router;
