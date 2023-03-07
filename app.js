@@ -12,6 +12,7 @@ const userRoutes = require('./routes/userProfilesRouter');
 const companyRoutes = require('./routes/companyProfileRouter');
 const consumerRoutes = require('./routes/consumerRouter');
 
+// To prevent NODE from crashing 
 process.on('uncaughtException', function (err) {
   console.error(err);
   console.log("Node NOT Exiting...");
