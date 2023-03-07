@@ -24,7 +24,7 @@ const positionSchema = new Schema({
             required: false
         },
         hoursFlexibility:{
-            type: [Number],
+            type: Number,
             required: false
         },
         isInPerson:{

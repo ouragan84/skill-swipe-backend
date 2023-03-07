@@ -342,5 +342,16 @@ const getCompleteInfo = async (req, res) => {
     }
 }
 
+const deleteUserProfile = async (id) => {
+    const user = userProfileSchema.findById(id);
+    
+    if(!user)
+        throw new Error("User Not Found");
+
+    deleteImage(user.profilePicture.name);
+
+    await userProfileSchema.deleteOne({_id: id})
+}
+
 module.exports = {setUserPersonalInformation, addExperience, setLocation, setPreferences, setSkillPreferences, getCompleteInfo,
-    setProfilePhoto, setDescription, getProfilePhoto, getPublicInfo, completeUser, editExperience, deleteExperience}
+    setProfilePhoto, setDescription, getProfilePhoto, getPublicInfo, completeUser, editExperience, deleteExperience, deleteUserProfile}

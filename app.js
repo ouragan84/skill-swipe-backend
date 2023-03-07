@@ -12,6 +12,11 @@ const userRoutes = require('./routes/userProfilesRouter');
 const companyRoutes = require('./routes/companyProfileRouter');
 const consumerRoutes = require('./routes/consumerRouter');
 
+process.on('uncaughtException', function (err) {
+  console.error(err);
+  console.log("Node NOT Exiting...");
+});
+
 // create app
 const app = express();
 

@@ -37,8 +37,10 @@ router.get('/get/complete-info', companyProfileService.getCompleteInfo);
 router.use('/get/complete-position-info', auth.checkConsumerConfirmedAuth);
 router.get('/get/complete-position-info/:index', companyProfileService.getCompletePositionInfo);
 
-router.get('/get/public-info/:id', companyProfileService.getPublicInfo)
+// router.get('/get/public-info/:id', companyProfileService.getPublicInfo)
 
-router.get('/get/public-position-info/:id', companyProfileService.getPublicPositionInfo)
+// router.get('/get/public-position-info/:id', companyProfileService.getPublicPositionInfo)
+
+
 
 module.exports = router;

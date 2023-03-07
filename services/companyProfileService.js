@@ -19,7 +19,7 @@ const getCompanyFromHeader = async (req) => {
         if( current_company )
             return current_company
     }
-    const newCompany = await companyProfileSchema.create({consumerId: consumer._id});
+    const newCompany = await companyProfileSchema.create({consumerId: consumer._id, positions:[], profilePicture: {name:''}});
     consumer.profileId = newCompany._id;
     await consumerSchema.findByIdAndUpdate(consumer._id, {profileId: newCompany._id});
     return newCompany;
@@ -69,7 +69,7 @@ const addPosition = async (req, res) => {
 
         return res.status(200).json({'status': 'success', 'message':'successfully created poisiton'});
     } catch (err) {
-        console.error(err)
+        // console.error(err)
         res.status(400).json({'status': 'failure', 'message': err.message});
     }
 }
@@ -126,7 +126,7 @@ const deletePosition = async (req, res) => {
 
 const checkPositionValid = async (position, title, description, payRange, hoursPerWeek, skills, hoursFlexibility, isInPerson, 
     isHybrid, isRemote, branchSize, acceptMinors, location, fillGoalCount) => {
-    checkPropertyExists(title, "name", "string", "create position");
+    checkPropertyExists(title, "title", "string", "create position");
     checkPropertyExists(description, "description", "string", "create position");
     checkInRange(payRange, "payRange", 5, 10000, "create position");
     checkInRange(hoursPerWeek, "hoursPerWeek", 1, 40, "create position");
@@ -141,8 +141,10 @@ const checkPositionValid = async (position, title, description, payRange, hoursP
     checkPropertyExists(acceptMinors, "acceptMinors", "boolean", "create position");
     const city = await getCityFromLocation(location);
     checkPropertyExists(fillGoalCount, "fillGoalCount", "number", "create position");
-    if(hoursFlexibility<1) 
+    if(fillGoalCount<1) 
         throw new Error("fill goal must be above 1");
+
+    console.log(hoursFlexibility, fillGoalCount);
 
     if(position){
         position.information.title = title;
@@ -274,14 +276,14 @@ const getPositionPhoto = async (req, res) => {
 
 const getPublicInfo = async (id) => {
     const company = await companyProfileSchema.findById(id);
-    if( company ){
-        const { consumerId, positions, ...ret } = company; // ommit consumerId and positions
-        return ret;
-    }
-    throw new Error("Company does not exist");
+    if( !company )
+        throw new Error("Company does not exist");
+    const { consumerId, positions, ...ret } = company; // ommit consumerId and positions
+    return ret;
 }
 
 const getPublicPositionInfo = async (id) => {
+
     const position = await positionSchema.findById(id);
 
     if(!position)
@@ -306,11 +308,15 @@ const completeCompany = async (req, res) => {
         checkPropertyExists(company.profilePicture.name, "profilePicture", "string");
         checkPropertyExists(company.positions, "positions", "object");
 
-        company.positions.forEach(async (posName) => {
-            const pos = await positionSchema.findById(posName);
-            checkPositionValid(null, pos.title, pos.description, pos.payRange, pos.hoursPerWeek, pos.skills, pos.hoursFlexibility, pos.isInPerson,
-                pos.isHybrid, pos.isRemote, pos.branchSize, pos.acceptMinors, pos.location, pos.fillGoalCount)
-        });
+        // let positionsValid = true;
+
+        for(let i = 0; i <  company.positions.length; ++i){
+            const pos = await positionSchema.findById( company.positions[i]);
+            await checkPositionValid(null, pos.information.title, pos.information.description, pos.information.payRange, 
+                    pos.information.hoursPerWeek, pos.information.skills, pos.information.hoursFlexibility, pos.information.isInPerson,
+                    pos.information.isHybrid, pos.information.isRemote, pos.information.branchSize, 
+                    pos.settings.acceptMinors, pos.settings.location, pos.settings.fillGoalCount)
+        }
 
         const consumer = req.consumer;
         consumer.isAccountComplete = true;
@@ -319,7 +325,7 @@ const completeCompany = async (req, res) => {
 
         return res.status(200).json({'status': 'success', 'message':'company is complete'});
     } catch (err) {
-        res.status(400).json({'status': 'failure', 'message': err.message});
+        return res.status(400).json({'status': 'failure', 'message': err.message});
     }
 }
 
@@ -355,9 +361,25 @@ const getCompletePositionInfo = async (req, res) => {
 }
 
 
+const deleteCompanyProfile = async (id) => {
+    const company = companyProfileSchema.findById(id);
+    
+    if(!company)
+        throw new Error("Company Not Found");
+
+    deleteImage(company.profilePicture.name);
+
+    company.positions.forEach(async (pos) => {
+        await positionSchema.deleteOne({_id: pos})
+        deleteImage(pos.positionPicture.name);
+    });
+
+    await companyProfileSchema.deleteOne({_id: id})
+}
+
 
 
 // TODO: Make sure that positions are deleted when company consumer is deleted.
 
 module.exports = {setCompanyInformation, addPosition, editPosition, deletePosition, getPublicInfo, getCompleteInfo, getCompletePositionInfo,
-    getProfilePhoto, setProfilePhoto, getPositionPhoto, setPositionPhoto, getPublicPositionInfo, completeCompany}
+    getProfilePhoto, setProfilePhoto, getPositionPhoto, setPositionPhoto, getPublicPositionInfo, completeCompany, deleteCompanyProfile}

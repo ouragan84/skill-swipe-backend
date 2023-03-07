@@ -32,7 +32,7 @@ const uploadImage = async (body, headers, width, height) => {
   const image = await Buffer.from( body, 'base64');
 
   const fileBuffer = await sharp(image)
-    .resize({ height, width, fit: "contain" })
+    .resize({ height, width, fit: 'cover' }) // more info: https://sharp.pixelplumbing.com/api-resize
     .toBuffer()
 
   const uploadParams = {

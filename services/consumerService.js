@@ -8,6 +8,9 @@ const jwt = require('jsonwebtoken')
 const {sendMail, sendConfirmationEmailTemplate, sendPasswordResetEmailTemplate} = require('../hooks/emailConfig.js')
 const auth = require('../hooks/authMiddleware');
 const dotenv = require('dotenv');
+const {deleteCompanyProfile} = require('./companyProfileService');
+const {deleteUserProfile} = require('./userProfileService');
+
 dotenv.config();
 
 const registerConsumer = async (req, res) => {
@@ -210,8 +213,17 @@ const getLoggedConsumer = (req, res) => {
     res.status(200).send({ "status": "success", "consumer": req.consumer})
 }
 
+
+// TODO: admin console to delete unused consumers and stuff
 const deleteConsumer = async (req, res) => {
     try {
+        if(req.consumer.isEmailConfrimed){
+            if(req.consumer.isTypeUser)
+                await deleteUserProfile(req.consumer.profileId);
+            else
+                await deleteCompanyProfile(req.consumer.profileId);
+        }
+
         await consumerSchema.deleteOne({ _id: req.consumer._id });
         res.status(200).send({"status": "success", "message": "deleted consumer successfully"});
     } catch (err) {
