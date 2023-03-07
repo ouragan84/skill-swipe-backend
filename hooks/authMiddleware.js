@@ -26,6 +26,8 @@ const checkConfirmationToken = async (token, isPWReset) => {
   return consumer
 }
 
+// TODO: Currently exploitable with ~1,000,000 concurrent requests, find safer way to do this
+
 const getPWResetCode = async (consumer) => {
   const timeNow = Date(Date.now());
   await consumerSchema.findByIdAndUpdate(consumer._id, { $set: { lastTokenDate: timeNow } });
@@ -63,7 +65,7 @@ const generateSessionToken = async (consumer) => {
   const timeNow = Date.now();
   await consumerSchema.findByIdAndUpdate(consumer._id, { $set: { lastTokenDate: timeNow } })
 
-  return jwt.sign({ consumerID: consumer._id, tokenDate: timeNow}, process.env.SESSION_SECRET_KEY, { expiresIn: '1h' });
+  return jwt.sign({ consumerID: consumer._id, tokenDate: timeNow}, process.env.SESSION_SECRET_KEY, { expiresIn: '3h' });
 }
 
 const getTokenFromHeader = async (headers) => {

@@ -6,19 +6,19 @@ const userProfileSchema = new Schema({
     personalInformation:{
         firstName:{
             type: String,
-            required: true
+            required: false
         },
         lastName:{
             type: String,
-            required: true
+            required: false
         },
         DOB:{
             type: Date,
-            required: true
+            required: false
         },
         location:{
             type: [Number],
-            required: true
+            required: false
         },
         city:{
             type: String,
@@ -26,7 +26,7 @@ const userProfileSchema = new Schema({
         },
         description:{
             type: String,
-            required: true
+            required: false
         },
     },
     experience:[
@@ -43,30 +43,32 @@ const userProfileSchema = new Schema({
                 type: Number,
                 required: true
             },
-            isEducation:{
+            isCurrent:{
                 type: Boolean,
                 required: true
             },
-            isPresent:{
-                type: Boolean,
-                required: true
-            },
-            tags:{
+            skills:{
                 type: [String],
                 required: true
             }
         }
     ],
-    profilePictureURL:{
-        type: String,
+    profilePicture:{
+        name:{
+            type: String,
+            required: false
+        }
+    },
+    consumerId:{
+        type: mongoose.Types.ObjectId,
         required: true
     },
-    interests:{
+    preferences:{
         maxDistance:{
             type: Number,
             required: false
         },
-        tags:{
+        skills:{
             type: [String],
             required: false
         },
@@ -78,11 +80,15 @@ const userProfileSchema = new Schema({
             type: [Number],
             required: false
         },
-        isRemoteOnly:{
+        isInPerson:{
             type: Boolean,
             default: false
         },
-        isRemoteOnly:{
+        isHybrid:{
+            type: Boolean,
+            default: false
+        },
+        isRemote:{
             type: Boolean,
             required: false
         },
@@ -90,7 +96,43 @@ const userProfileSchema = new Schema({
             type: [Number],
             required: false
         },
-    }
+    },
+    applied:[
+        {
+            position:{
+                type: mongoose.Types.ObjectId,
+                required: false
+            },
+            time:{
+                type: Date,
+                required: false
+            }
+        }
+    ],
+    matched:[
+        {
+            position:{
+                type: mongoose.Types.ObjectId,
+                required: false
+            },
+            time:{
+                type: Date,
+                required: false
+            }
+        }
+    ],
+    rejected:[
+        {
+            position:{
+                type: mongoose.Types.ObjectId,
+                required: false
+            },
+            time:{
+                type: Date,
+                required: false
+            }
+        }
+    ],
 })
 
 module.exports = mongoose.model('UserProfile', userProfileSchema)

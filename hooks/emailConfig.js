@@ -31,8 +31,11 @@ const sendMail = (to, subject, text, html=null) => {
   });
 }
 
+// TODO: Issue with outlook security, added email adress in subject to avoid email blocked. 
+// Might want to change that and look for another mailing service.
+
 const sendConfirmationEmailTemplate = (to, link) => {
-  sendMail(to, "Skill Swipe Email Confirmation", `Skill Swipe Email Confirmation: Please paste this link into your browser ${link}`, 
+  sendMail(to, `Skill Swipe Email Confirmation --- ${to}`, `Skill Swipe Email Confirmation: Please paste this link into your browser: ${link}`, 
   `
     <style type="text/css">
     /**
@@ -284,7 +287,7 @@ const sendConfirmationEmailTemplate = (to, link) => {
 }
 
 const sendPasswordResetEmailTemplate = (to, code) => {
-  sendMail(to, "Skill Swipe Password Reset", `Skill Swipe Password Reset: Please paste this code into the app ${code}`, `
+  sendMail(to, `Skill Swipe Password Reset --- ${to}`, `Skill Swipe Password Reset: Please paste this code into the app ${code}`, `
   <style type="text/css">
   /**
    * Google webfonts. Recommended to include the .woff version for cross-client compatibility.
@@ -406,7 +409,7 @@ const sendPasswordResetEmailTemplate = (to, code) => {
         <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
           <tr>
             <td align="left" bgcolor="#ffffff" style="padding: 36px 24px 0; font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif; border-top: 3px solid #d4dadf;">
-              <h1 style="margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -1px; line-height: 48px;">Confirm Your Email Address</h1>
+              <h1 style="margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -1px; line-height: 48px;">Reset Your Password</h1>
             </td>
           </tr>
         </table>

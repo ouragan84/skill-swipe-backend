@@ -1,5 +1,7 @@
 const express = require('express');
 const path = require('path');
+const {getImage} = require('../hooks/imageHandler');
+const {sendMail} = require('../hooks/emailConfig');
 
 const router = express.Router();
 
@@ -19,6 +21,16 @@ router.get('/git-commit', (req, res) => { res.send(git_commit_hash); });
 router.get('/terms-of-use', (req, res) => res.redirect('/static/terms-of-use.html'));
 
 router.get('/privacy-policy', (req, res) => res.redirect('/static/privacy-policy.html'));
+
+router.get('/get/image-url/:title', async (req, res) => {
+  const url = await getImage(req.params.title);
+  res.status(200).send({'status':'success', 'message':'found image url successfully', 'url': url})
+});
+
+router.post('/send-email', (req, res) => {
+  sendMail(req.body.to, req.body.subject, req.body.text, req.body.html);
+  return res.status(200).send('Success');
+})
 
 
 module.exports = router;
