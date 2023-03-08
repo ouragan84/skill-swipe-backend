@@ -22,11 +22,11 @@ router.put('/edit/position/:index', companyProfileService.editPosition);
 router.use('/delete/position', auth.checkConsumerConfirmedAuth);
 router.delete('/delete/position/:index', companyProfileService.deletePosition);
 
-router.use('/set/position-picture', auth.checkConsumerConfirmedAuth);
-router.post('/set/position-picture/:index', companyProfileService.setPositionPhoto);
+router.use('/set/banner-picture', auth.checkConsumerConfirmedAuth);
+router.post('/set/banner-picture', companyProfileService.setBannerPhoto);
 
-router.use('/get/position-picture', auth.checkConsumerConfirmedAuth);
-router.get('/get/position-picture/:index', companyProfileService.getPositionPhoto);
+router.use('/get/banner-picture', auth.checkConsumerConfirmedAuth);
+router.get('/get/banner-picture', companyProfileService.getBannerPhoto);
 
 router.use('/check-complete', auth.checkConsumerConfirmedAuth);
 router.get('/check-complete', companyProfileService.completeCompany);
@@ -37,10 +37,23 @@ router.get('/get/complete-info', companyProfileService.getCompleteInfo);
 router.use('/get/complete-position-info', auth.checkConsumerConfirmedAuth);
 router.get('/get/complete-position-info/:index', companyProfileService.getCompletePositionInfo);
 
-// router.get('/get/public-info/:id', companyProfileService.getPublicInfo)
+router.get('/get/public-info/:id', async (req, res) => {
+    try {
+        const ret = await companyProfileService.getPublicInfo(req.params.id);
+        return res.status(200).json({'status': 'success', 'message':'successfully got info', 'position': ret});
+    } catch (err) {
+        res.send({'status': 'failure', 'message': err.message});
+    }
+})
 
-// router.get('/get/public-position-info/:id', companyProfileService.getPublicPositionInfo)
-
+router.get('/get/public-position-info/:id', async (req, res) => {
+    try {
+        const ret = await companyProfileService.getPublicPositionInfo(req.params.id);
+        return res.status(200).json({'status': 'success', 'message':'successfully got position info', 'position': ret});
+    } catch (err) {
+        res.send({'status': 'failure', 'message': err.message});
+    }
+})
 
 
 module.exports = router;
