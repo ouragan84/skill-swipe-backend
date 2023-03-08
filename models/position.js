@@ -43,6 +43,7 @@ const positionSchema = new Schema({
             type: Number,
             required: false
         },
+        // remove that and add banner picture instead.
         positionPicture:{
             name:{
                 type: String,
