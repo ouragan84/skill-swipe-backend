@@ -6,6 +6,7 @@ const consumerSchema = require('../models/consumer');
 const {checkPropertyExists, checkInRange, checkTags} = require('../hooks/propertyCheck');
 const {uploadImage, updateImage, getImage, deleteImage} = require('../hooks/imageHandler');
 const {getCityFromLocation} = require('../hooks/locationHandler');
+const {omit} = require('../hooks/objectHelper');
 
 const getUserFromHeader = async (req) => {
     const consumer = req.consumer;
@@ -231,7 +232,7 @@ const setProfilePhoto = async (req, res) => {
     try {
         const user = await getUserFromHeader(req);
 
-        const imageName = await updateImage(user.profilePicture.name, req.body, req.headers, 512, 512);
+        const imageName = await updateImage(user.profilePicture.name, req.body, req.headers, 1024, 1024);
 
         user.profilePicture.name = imageName;
 
@@ -247,7 +248,7 @@ const getProfilePhoto = async (req, res) => {
     try {
         const user = await getUserFromHeader(req);
 
-        const url = await getImage(user.profilePicture.name);
+        const url = await getImage(user.profilePicture.name, 'default-user-profile.jpg');
         
         return res.status(200).json({'status': 'success', 'message':'successfully got picture url', 'pictureUrl': url});
     } catch (err) {
@@ -336,7 +337,9 @@ const getCompleteInfo = async (req, res) => {
     try {
         const user = await getUserFromHeader(req);
 
-        return res.status(200).json({'status': 'success', 'message':'successfully got public user info', 'user': user});
+        const { status, ...ret } = user; // ommit status
+
+        return res.status(200).json({'status': 'success', 'message':'successfully got public user info', 'user': ret});
     } catch (err) {
         res.status(400).json({'status': 'failure', 'message': err.message});
     }

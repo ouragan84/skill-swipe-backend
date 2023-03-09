@@ -53,7 +53,11 @@ const uploadImage = async (body, headers, width, height) => {
   return imageName;
 }
 
-const getImage = async (imageName) => {
+const getImage = async (imageName, defaultImage) => {
+
+  if(imageName === 'default')
+    return `${process.env.OWN_URL}/static/${defaultImage}`;
+
   const params = {
     Bucket: bucketName,
     Key: imageName
@@ -65,6 +69,7 @@ const getImage = async (imageName) => {
 
   if(url)
     return url;
+  
   throw new Error("Image not Found");
 
 }

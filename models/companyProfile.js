@@ -21,12 +21,18 @@ const companyProfileSchema = new Schema({
     profilePicture:{
         name:{
             type: String,
-            required: false
+            default: 'default'
+        }
+    },
+    bannerPicture:{
+        name:{
+            type: String,
+            default: 'default'
         }
     },
     positions:{
         type: [mongoose.Types.ObjectId],
-        required: false
+        default: []
     },
     consumerId:{
         type: mongoose.Types.ObjectId,

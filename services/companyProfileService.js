@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const companyProfileSchema = require('../models/companyProfile');
 const positionSchema = require('../models/position');
 const consumerSchema = require('../models/consumer');
+const {omit} = require('../hooks/objectHelper');
 
 const {checkPropertyExists, checkInRange, checkTags} = require('../hooks/propertyCheck');
 const {uploadImage, updateImage, getImage, deleteImage} = require('../hooks/imageHandler');
@@ -19,7 +20,7 @@ const getCompanyFromHeader = async (req) => {
         if( current_company )
             return current_company
     }
-    const newCompany = await companyProfileSchema.create({consumerId: consumer._id, positions:[], profilePicture: {name:''}});
+    const newCompany = await companyProfileSchema.create({consumerId: consumer._id});
     consumer.profileId = newCompany._id;
     await consumerSchema.findByIdAndUpdate(consumer._id, {profileId: newCompany._id});
     return newCompany;
@@ -54,11 +55,11 @@ const setCompanyInformation = async (req, res) => {
 const addPosition = async (req, res) => {
     try {
         const company = await getCompanyFromHeader(req);
-        const {title, description, payRange, hoursPerWeek, skills, hoursFlexibility, isInPerson, 
-            isHybrid, isRemote, branchSize, acceptMinors, location, fillGoalCount} = req.body;
+        const {title, description, payRange, hoursPerWeek, skills, hoursFlexibility, isInPerson, isHybrid, isRemote, branchSize, 
+            acceptsOver16, acceptsOver18, acceptsOver21, monthsRelevantExperience, skillsImportance, location, fillGoalCount} = req.body;
 
-        const position = await checkPositionValid(null, title, description, payRange, hoursPerWeek, skills, hoursFlexibility, 
-            isInPerson, isHybrid, isRemote, branchSize, acceptMinors, location, fillGoalCount);
+        const position = await checkPositionValid(null, title, description, payRange, hoursPerWeek, skills, hoursFlexibility, isInPerson, 
+            isHybrid, isRemote, branchSize, acceptsOver16, acceptsOver18, acceptsOver21, monthsRelevantExperience, skillsImportance, location, fillGoalCount);
 
         position.information.companyId = company._id;
         
@@ -67,7 +68,7 @@ const addPosition = async (req, res) => {
 
         await companyProfileSchema.findByIdAndUpdate(company._id, company);   
 
-        return res.status(200).json({'status': 'success', 'message':'successfully created poisiton'});
+        return res.status(200).json({'status': 'success', 'message':'successfully created position'});
     } catch (err) {
         // console.error(err)
         res.status(400).json({'status': 'failure', 'message': err.message});
@@ -77,8 +78,8 @@ const addPosition = async (req, res) => {
 const editPosition = async (req, res) => {
     try {
         const company = await getCompanyFromHeader(req);
-        const {title, description, payRange, hoursPerWeek, skills, hoursFlexibility, isInPerson, 
-            isHybrid, isRemote, branchSize, acceptMinors, location, fillGoalCount} = req.body;
+        const {title, description, payRange, hoursPerWeek, skills, hoursFlexibility, isInPerson, isHybrid, isRemote, branchSize, 
+            acceptsOver16, acceptsOver18, acceptsOver21, monthsRelevantExperience, skillsImportance, location, fillGoalCount} = req.body;
         const index = Number(req.params.index);
 
         checkPropertyExists(index, "index", "number", "edit position")
@@ -86,17 +87,17 @@ const editPosition = async (req, res) => {
         if(index >= company.positions.length)
             throw new Error("Position does not exist");
 
-        const positon = await positionSchema.findById(company.positions[index]);
+        const position = await positionSchema.findById(company.positions[index]);
 
-        if(!positon)
+        if(!position)
             throw new Error("could not find position")
 
-        await checkPositionValid(positon, title, description, payRange, hoursPerWeek, skills, hoursFlexibility, 
-            isInPerson, isHybrid, isRemote, branchSize, acceptMinors, location, fillGoalCount);
+        await checkPositionValid(position, title, description, payRange, hoursPerWeek, skills, hoursFlexibility, isInPerson, isHybrid, 
+            isRemote, branchSize, acceptsOver16, acceptsOver18, acceptsOver21, monthsRelevantExperience, skillsImportance, location, fillGoalCount);
 
-        await positionSchema.findByIdAndUpdate(positon._id, positon);
+        await positionSchema.findByIdAndUpdate(position._id, position);
 
-        return res.status(200).json({'status': 'success', 'message':'successfully editted poisiton'});
+        return res.status(200).json({'status': 'success', 'message':'successfully editted position'});
     } catch (err) {
         res.status(400).json({'status': 'failure', 'message': err.message});
     }
@@ -118,14 +119,15 @@ const deletePosition = async (req, res) => {
 
         await companyProfileSchema.findByIdAndUpdate(company._id, company);
 
-        return res.status(200).json({'status': 'success', 'message':'successfully deleted poisiton'});
+        return res.status(200).json({'status': 'success', 'message':'successfully deleted position'});
     } catch (err) {
         res.status(400).json({'status': 'failure', 'message': err.message});
     }
 }
 
-const checkPositionValid = async (position, title, description, payRange, hoursPerWeek, skills, hoursFlexibility, isInPerson, 
-    isHybrid, isRemote, branchSize, acceptMinors, location, fillGoalCount) => {
+const checkPositionValid = async (position, title, description, payRange, hoursPerWeek, skills, hoursFlexibility, isInPerson, isHybrid, 
+    isRemote, branchSize, acceptsOver16, acceptsOver18, acceptsOver21, monthsRelevantExperience, skillsImportance, location, fillGoalCount) => {
+
     checkPropertyExists(title, "title", "string", "create position");
     checkPropertyExists(description, "description", "string", "create position");
     checkInRange(payRange, "payRange", 5, 10000, "create position");
@@ -134,17 +136,35 @@ const checkPositionValid = async (position, title, description, payRange, hoursP
     checkPropertyExists(hoursFlexibility, "hoursFlexibility", "number", "create position");
     if(hoursFlexibility<1 || hoursFlexibility>3) 
         throw new Error("hours flexibility must be in range 1 - 3");
+
     checkPropertyExists(isInPerson, "isInPerson", "boolean", "create position");
     checkPropertyExists(isHybrid, "isHybrid", "boolean", "create position");
     checkPropertyExists(isRemote, "isRemote", "boolean", "create position");
+    if( (isInPerson?1:0) + (isHybrid?1:0) + (isRemote?1:0) != 1)
+        throw new Error("Exactly one of isInPerson, isHybrid, or isRemote must be true");
+
+    checkPropertyExists(acceptsOver16, "acceptsOver16", "boolean", "create position");
+    checkPropertyExists(acceptsOver18, "acceptsOver18", "boolean", "create position");
+    checkPropertyExists(acceptsOver21, "acceptsOver21", "boolean", "create position");
+    if( (acceptsOver16?1:0) + (acceptsOver18?1:0) + (acceptsOver21?1:0) != 1)
+        throw new Error("Exactly one of acceptsOver16, acceptsOver18, or acceptsOver21 must be true");
+    
+    checkInRange(monthsRelevantExperience, "monthsRelevantExperience", 0, 240, "create position");
+
+    checkPropertyExists(skillsImportance, "skillsImportance", "object", "create position");
+    if(skillsImportance.length != skills.length)
+        throw new Error("skillsImportance must have as many elements as skills");
+
+    skillsImportance.forEach(element => {
+        if(element < 1 || element > 3)
+            throw new Error("skillsImportance must be an array of numbers 1-3");
+    });
+
     checkPropertyExists(branchSize, "branchSize", "number", "create position");
-    checkPropertyExists(acceptMinors, "acceptMinors", "boolean", "create position");
     const city = await getCityFromLocation(location);
     checkPropertyExists(fillGoalCount, "fillGoalCount", "number", "create position");
     if(fillGoalCount<1) 
         throw new Error("fill goal must be above 1");
-
-    console.log(hoursFlexibility, fillGoalCount);
 
     if(position){
         position.information.title = title;
@@ -159,7 +179,12 @@ const checkPositionValid = async (position, title, description, payRange, hoursP
         position.information.branchSize = branchSize;
         position.information.city = city;
 
-        position.settings.acceptMinors = acceptMinors;
+        position.settings.acceptsOver16 = acceptsOver16;
+        position.settings.acceptsOver18 = acceptsOver18;
+        position.settings.acceptsOver21 = acceptsOver21;
+        position.settings.skillsImportance = skillsImportance;
+        position.settings.monthsRelevantExperience = monthsRelevantExperience;
+
         position.settings.location = location;
         position.settings.fillGoalCount = fillGoalCount;
     }else{
@@ -176,14 +201,15 @@ const checkPositionValid = async (position, title, description, payRange, hoursP
                 isRemote,
                 branchSize,
                 city,
-                positionPicture:{
-                    name: null
-                }
             },
             settings:{
-                acceptMinors,
+                acceptsOver16,
+                acceptsOver18,
+                acceptsOver21,
                 location,
-                fillGoalCount
+                fillGoalCount,
+                monthsRelevantExperience,
+                skillsImportance
             }
         }
     }
@@ -193,7 +219,7 @@ const setProfilePhoto = async (req, res) => {
     try {
         const company = await getCompanyFromHeader(req);
 
-        const imageName = await updateImage(company.profilePicture.name, req.body, req.headers, 512, 512);
+        const imageName = await updateImage(company.profilePicture.name, req.body, req.headers, 1024, 1024);
 
         company.profilePicture.name = imageName;
 
@@ -209,7 +235,7 @@ const getProfilePhoto = async (req, res) => {
     try {
         const company = await getCompanyFromHeader(req);
 
-        const url = await getImage(company.profilePicture.name);
+        const url = await getImage(company.profilePicture.name, 'default-company-profile.jpg');
         
         return res.status(200).json({'status': 'success', 'message':'successfully got picture url', 'pictureUrl': url});
     } catch (err) {
@@ -217,55 +243,27 @@ const getProfilePhoto = async (req, res) => {
     }
 }
 
-const setPositionPhoto = async (req, res) => {
+const setBannerPhoto = async (req, res) => {
     try {
         const company = await getCompanyFromHeader(req);
-        const index = Number(req.params.index);
 
-        checkPropertyExists(index, "index", "number", "edit position")
+        const imageName = await updateImage(company.bannerPicture.name, req.body, req.headers, 1024, 1024);
 
-        if(index >= company.positions.length)
-            throw new Error("Position does not exist");
+        company.bannerPicture.name = imageName;
 
-        let position = await positionSchema.findById(company.positions[index]);
+        await companyProfileSchema.findByIdAndUpdate(company._id, company);   
 
-        if(!position)
-            throw new Error("could not find position")
-
-        const imageName = await updateImage(position.information.positionPicture.name, req.body, req.headers, 1080, 1920); //Can Resolution here
-
-        console.log(imageName)
-        // positon.information.positionPicture = {};
-        position.information.positionPicture.name = `${imageName}`;
-
-        console.log(position)
-
-        await positionSchema.findByIdAndUpdate(position._id, position);
-
-        return res.status(200).json({'status': 'success', 'message':'successfully set position picture'});
+        return res.status(200).json({'status': 'success', 'message':'successfully set banner picture'});
     } catch (err) {
         res.status(400).json({'status': 'failure', 'message': err.message});
     }
 }
 
-const getPositionPhoto = async (req, res) => {
+const getBannerPhoto = async (req, res) => {
     try {
         const company = await getCompanyFromHeader(req);
-        const index = Number(req.params.index);
 
-        checkPropertyExists(index, "index", "number", "edit position")
-
-        if(index >= company.positions.length)
-            throw new Error("Position does not exist");
-
-        const positon = await positionSchema.findById(company.positions[index]);
-
-        if(!positon)
-            throw new Error("could not find position")
-
-        // console.log(positon.information, positon.information.positionPicture)
-
-        const url = await getImage(positon.information.positionPicture.name);
+        const url = await getImage(company.bannerPicture.name, 'default-company-banner.jpg');
         
         return res.status(200).json({'status': 'success', 'message':'successfully got picture url', 'pictureUrl': url});
     } catch (err) {
@@ -278,7 +276,9 @@ const getPublicInfo = async (id) => {
     const company = await companyProfileSchema.findById(id);
     if( !company )
         throw new Error("Company does not exist");
-    const { consumerId, positions, ...ret } = company; // ommit consumerId and positions
+
+    const ret = omit(company, 'consumerId', 'positions');
+
     return ret;
 }
 
@@ -289,7 +289,7 @@ const getPublicPositionInfo = async (id) => {
     if(!position)
         throw new Error("Position does not exist");
 
-    const companyInfo = getPublicPositionInfo(position.companyId)
+    const companyInfo = await getPublicInfo(position.information.companyId);
 
     return {
         positionInfo: position.information,
@@ -313,9 +313,10 @@ const completeCompany = async (req, res) => {
         for(let i = 0; i <  company.positions.length; ++i){
             const pos = await positionSchema.findById( company.positions[i]);
             await checkPositionValid(null, pos.information.title, pos.information.description, pos.information.payRange, 
-                    pos.information.hoursPerWeek, pos.information.skills, pos.information.hoursFlexibility, pos.information.isInPerson,
-                    pos.information.isHybrid, pos.information.isRemote, pos.information.branchSize, 
-                    pos.settings.acceptMinors, pos.settings.location, pos.settings.fillGoalCount)
+                pos.information.hoursPerWeek, pos.information.skills, pos.information.hoursFlexibility, pos.information.isInPerson, 
+                pos.information.isHybrid, pos.information.isRemote, pos.information.branchSize, pos.settings.acceptsOver16, 
+                pos.settings.acceptsOver18, pos.settings.acceptsOver21, pos.settings.monthsRelevantExperience, 
+                pos.settings.skillsImportance, pos.settings.location, pos.settings.fillGoalCount);
         }
 
         const consumer = req.consumer;
@@ -349,17 +350,18 @@ const getCompletePositionInfo = async (req, res) => {
         if(index >= company.positions.length)
             throw new Error("Position does not exist");
 
-        const positon = await positionSchema.findById(company.positions[index]);
+        const position = await positionSchema.findById(company.positions[index]);
 
-        if(!positon)
+        if(!position)
             throw new Error("could not find position")
 
-        return res.status(200).json({'status': 'success', 'message':'successfully got position info', 'position': positon});
+        const ret = omit(position, 'status');
+
+        return res.status(200).json({'status': 'success', 'message':'successfully got position info', 'position': ret});
     } catch (err) {
         res.status(400).json({'status': 'failure', 'message': err.message});
     }
 }
-
 
 const deleteCompanyProfile = async (id) => {
     const company = companyProfileSchema.findById(id);
@@ -368,18 +370,14 @@ const deleteCompanyProfile = async (id) => {
         throw new Error("Company Not Found");
 
     deleteImage(company.profilePicture.name);
+    deleteImage(company.bannerPicture.name);
 
     company.positions.forEach(async (pos) => {
         await positionSchema.deleteOne({_id: pos})
-        deleteImage(pos.positionPicture.name);
     });
 
     await companyProfileSchema.deleteOne({_id: id})
 }
 
-
-
-// TODO: Make sure that positions are deleted when company consumer is deleted.
-
 module.exports = {setCompanyInformation, addPosition, editPosition, deletePosition, getPublicInfo, getCompleteInfo, getCompletePositionInfo,
-    getProfilePhoto, setProfilePhoto, getPositionPhoto, setPositionPhoto, getPublicPositionInfo, completeCompany, deleteCompanyProfile}
+    getProfilePhoto, setProfilePhoto, getBannerPhoto, setBannerPhoto, getPublicPositionInfo, completeCompany, deleteCompanyProfile}
