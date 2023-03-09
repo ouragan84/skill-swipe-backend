@@ -6,6 +6,7 @@ const consumerSchema = require('../models/consumer');
 const {checkPropertyExists, checkInRange, checkTags} = require('../hooks/propertyCheck');
 const {uploadImage, updateImage, getImage, deleteImage} = require('../hooks/imageHandler');
 const {getCityFromLocation} = require('../hooks/locationHandler');
+const {omit} = require('../hooks/objectHelper');
 
 const getUserFromHeader = async (req) => {
     const consumer = req.consumer;

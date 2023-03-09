@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const companyProfileSchema = require('../models/companyProfile');
 const positionSchema = require('../models/position');
 const consumerSchema = require('../models/consumer');
+const {omit} = require('../hooks/objectHelper');
 
 const {checkPropertyExists, checkInRange, checkTags} = require('../hooks/propertyCheck');
 const {uploadImage, updateImage, getImage, deleteImage} = require('../hooks/imageHandler');
@@ -67,7 +68,7 @@ const addPosition = async (req, res) => {
 
         await companyProfileSchema.findByIdAndUpdate(company._id, company);   
 
-        return res.status(200).json({'status': 'success', 'message':'successfully created positon'});
+        return res.status(200).json({'status': 'success', 'message':'successfully created position'});
     } catch (err) {
         // console.error(err)
         res.status(400).json({'status': 'failure', 'message': err.message});
@@ -96,7 +97,7 @@ const editPosition = async (req, res) => {
 
         await positionSchema.findByIdAndUpdate(position._id, position);
 
-        return res.status(200).json({'status': 'success', 'message':'successfully editted positon'});
+        return res.status(200).json({'status': 'success', 'message':'successfully editted position'});
     } catch (err) {
         res.status(400).json({'status': 'failure', 'message': err.message});
     }
@@ -118,7 +119,7 @@ const deletePosition = async (req, res) => {
 
         await companyProfileSchema.findByIdAndUpdate(company._id, company);
 
-        return res.status(200).json({'status': 'success', 'message':'successfully deleted positon'});
+        return res.status(200).json({'status': 'success', 'message':'successfully deleted position'});
     } catch (err) {
         res.status(400).json({'status': 'failure', 'message': err.message});
     }
@@ -275,7 +276,9 @@ const getPublicInfo = async (id) => {
     const company = await companyProfileSchema.findById(id);
     if( !company )
         throw new Error("Company does not exist");
-    const { consumerId, positions, ...ret } = company; // ommit consumerId and positions
+
+    const ret = omit(company, 'consumerId', 'positions');
+
     return ret;
 }
 
@@ -286,7 +289,7 @@ const getPublicPositionInfo = async (id) => {
     if(!position)
         throw new Error("Position does not exist");
 
-    const companyInfo = getPublicInfo(position.information.companyId)
+    const companyInfo = await getPublicInfo(position.information.companyId);
 
     return {
         positionInfo: position.information,
@@ -310,9 +313,10 @@ const completeCompany = async (req, res) => {
         for(let i = 0; i <  company.positions.length; ++i){
             const pos = await positionSchema.findById( company.positions[i]);
             await checkPositionValid(null, pos.information.title, pos.information.description, pos.information.payRange, 
-                    pos.information.hoursPerWeek, pos.information.skills, pos.information.hoursFlexibility, pos.information.isInPerson,
-                    pos.information.isHybrid, pos.information.isRemote, pos.information.branchSize, 
-                    pos.settings.acceptMinors, pos.settings.location, pos.settings.fillGoalCount)
+                pos.information.hoursPerWeek, pos.information.skills, pos.information.hoursFlexibility, pos.information.isInPerson, 
+                pos.information.isHybrid, pos.information.isRemote, pos.information.branchSize, pos.settings.acceptsOver16, 
+                pos.settings.acceptsOver18, pos.settings.acceptsOver21, pos.settings.monthsRelevantExperience, 
+                pos.settings.skillsImportance, pos.settings.location, pos.settings.fillGoalCount);
         }
 
         const consumer = req.consumer;
@@ -346,19 +350,18 @@ const getCompletePositionInfo = async (req, res) => {
         if(index >= company.positions.length)
             throw new Error("Position does not exist");
 
-        const positon = await positionSchema.findById(company.positions[index]);
+        const position = await positionSchema.findById(company.positions[index]);
 
-        if(!positon)
+        if(!position)
             throw new Error("could not find position")
 
-        const { status, ...ret } = company; // ommit status
+        const ret = omit(position, 'status');
 
         return res.status(200).json({'status': 'success', 'message':'successfully got position info', 'position': ret});
     } catch (err) {
         res.status(400).json({'status': 'failure', 'message': err.message});
     }
 }
-
 
 const deleteCompanyProfile = async (id) => {
     const company = companyProfileSchema.findById(id);
@@ -375,9 +378,6 @@ const deleteCompanyProfile = async (id) => {
 
     await companyProfileSchema.deleteOne({_id: id})
 }
-
-
-// TODO: WEIRD DATA WITH FETCH PUBLIC AND PRIVATE COMPANY/POSITION DATA, fix. ALSO, FIX CHECK COMPLETE
 
 module.exports = {setCompanyInformation, addPosition, editPosition, deletePosition, getPublicInfo, getCompleteInfo, getCompletePositionInfo,
     getProfilePhoto, setProfilePhoto, getBannerPhoto, setBannerPhoto, getPublicPositionInfo, completeCompany, deleteCompanyProfile}
