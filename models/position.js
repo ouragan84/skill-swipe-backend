@@ -5,50 +5,43 @@ const positionSchema = new Schema({
     information:{
         title:{
             type: String,
-            required: false
+            required: true
         },
         description:{
             type: String,
-            required: false
+            required: true
         },
         payRange:{
             type: [Number],
-            required: false
+            required: true
         },
         hoursPerWeek:{
             type: [Number],
-            required: false
+            required: true
         },
         skills:{
             type: [String],
-            required: false
+            required: true
         },
         hoursFlexibility:{
             type: Number,
-            required: false
+            required: true
         },
         isInPerson:{
             type: Boolean,
-            default: false
+            default: true
         },
         isHybrid:{
             type: Boolean,
-            default: false
+            default: true
         },
         isRemote:{
             type: Boolean,
-            required: false
+            required: true
         },
         branchSize:{
             type: Number,
-            required: false
-        },
-        // remove that and add banner picture instead.
-        positionPicture:{
-            name:{
-                type: String,
-                required: false
-            }
+            required: true
         },
         companyId:{
             type: mongoose.Types.ObjectId,
@@ -56,71 +49,61 @@ const positionSchema = new Schema({
         },
         city:{
             type: String,
-            required: false
+            required: true
         },
     },
     settings:{
-        acceptMinors:{
+        acceptsOver16:{
             type: Boolean,
-            default: false
+            default: true
+        },
+        acceptsOver18:{
+            type: Boolean,
+            default: true
+        },
+        acceptsOver21:{
+            type: Boolean,
+            default: true
+        },
+        monthsRelevantExperience:{
+            type: [Number],
+            required: true
         },
         location:{
             type: [Number],
-            required: false
+            required: true
         },
         fillGoalCount:{
             type: Number,
-            required: false
+            required: true
         },
-        applicants:[
-            {
-                user:{
-                    type: mongoose.Types.ObjectId,
-                    required: false
-                },
-                time:{
-                    type: Date,
-                    required: false
-                }
-            }
-        ],
-        interviewees:[
-            {
-                user:{
-                    type: mongoose.Types.ObjectId,
-                    required: false
-                },
-                time:{
-                    type: Date,
-                    required: false
-                }
-            }
-        ],
-        employed:[
-            {
-                user:{
-                    type: mongoose.Types.ObjectId,
-                    required: false
-                },
-                time:{
-                    type: Date,
-                    required: false
-                }
-            }
-        ],
-        rejected:[
-            {
-                user:{
-                    type: mongoose.Types.ObjectId,
-                    required: false
-                },
-                time:{
-                    type: Date,
-                    required: false
-                }
-            }
-        ], 
+        skillsImportance:{
+            type: [Number],
+            required: true
+        },
     },
+    status:{
+        applicants:{
+            type: Map,
+            of: mongoose.Types.ObjectId,
+            default: {}
+        },
+        interviewees:{
+            type: Map,
+            of: mongoose.Types.ObjectId,
+            default: {}
+        },
+        employed:{
+            type: Map,
+            of: mongoose.Types.ObjectId,
+            default: {}
+        },
+        rejected:{
+            type: Map,
+            of: mongoose.Types.ObjectId,
+            default: {}
+        },
+    }
 })
 
 module.exports = mongoose.model('Position', positionSchema)

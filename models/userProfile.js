@@ -56,7 +56,7 @@ const userProfileSchema = new Schema({
     profilePicture:{
         name:{
             type: String,
-            required: false
+            default: 'default'
         }
     },
     consumerId:{
@@ -97,42 +97,23 @@ const userProfileSchema = new Schema({
             required: false
         },
     },
-    applied:[
-        {
-            position:{
-                type: mongoose.Types.ObjectId,
-                required: false
-            },
-            time:{
-                type: Date,
-                required: false
-            }
-        }
-    ],
-    matched:[
-        {
-            position:{
-                type: mongoose.Types.ObjectId,
-                required: false
-            },
-            time:{
-                type: Date,
-                required: false
-            }
-        }
-    ],
-    rejected:[
-        {
-            position:{
-                type: mongoose.Types.ObjectId,
-                required: false
-            },
-            time:{
-                type: Date,
-                required: false
-            }
-        }
-    ],
+    status:{
+        liked:{
+            type: Map,
+            of: mongoose.Types.ObjectId,
+            default: {}
+        },
+        interviewing:{
+            type: Map,
+            of: mongoose.Types.ObjectId,
+            default: {}
+        },
+        rejected:{
+            type: Map,
+            of: mongoose.Types.ObjectId,
+            default: {}
+        },
+    }
 })
 
 module.exports = mongoose.model('UserProfile', userProfileSchema)

@@ -32,15 +32,15 @@ app.use(cors({
 app.use('/static', express.static('public'))
 app.use(bodyParser.raw({
     type: 'image/png',
-    limit: '10mb'
+    limit: '15mb'
   }));
 app.use(bodyParser.raw({
     type: 'image/jpeg',
-    limit: '10mb'
+    limit: '15mb'
   }));
 app.use(bodyParser.raw({
     type: 'image/gif',
-    limit: '10mb'
+    limit: '15mb'
   }));
 
 // add routes
