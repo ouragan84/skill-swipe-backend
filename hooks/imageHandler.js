@@ -29,11 +29,25 @@ const uploadImage = async (body, headers, width, height) => {
 
   const imageName = generateFileName()
 
-  const image = await Buffer.from( body, 'base64');
+  const image = Buffer.from( body, 'base64');
+  // const buf = new Buffer(body.replace(/^data:image/\w+;base64,/, ""),'base64')
+
+
+  // const image = body;
+
+  // console.log(image)
+
+  // console.log("1", contentType, image);
+
+  // console.log(image.toLocaleString)
 
   const fileBuffer = await sharp(image)
     .resize({ height, width, fit: 'cover' }) // more info: https://sharp.pixelplumbing.com/api-resize
     .toBuffer()
+
+  // const fileBuffer = image;
+
+    // console.log("2")
 
   const uploadParams = {
     Bucket: bucketName,
@@ -43,6 +57,9 @@ const uploadImage = async (body, headers, width, height) => {
     ContentEncoding: 'base64', // important to tell that the incoming buffer is base64
     ContentType: contentType, // e.g. "image/jpeg" or "image/png"
   }
+
+  // console.log("3")
+
   
   await s3Client.send(new PutObjectCommand(uploadParams))
   
@@ -77,12 +94,13 @@ const getImage = async (imageName, defaultImage) => {
 const deleteImage = async (imageName) => {
   const deleteParams = {
     Bucket: bucketName,
-    Key: user.images[index].name,
+    Key: imageName,
   }
 
   await s3Client.send(new DeleteObjectCommand(deleteParams));
 }
 
+// TODO: Wait until upload is successfull to delete old image
 const updateImage = async (imageName, body, headers, width, height) => {
   try{
     await deleteImage(imageName);

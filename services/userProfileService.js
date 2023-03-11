@@ -36,8 +36,8 @@ const setUserPersonalInformation = async (req, res) => {
         checkPropertyExists(DOB, "DOB", "string", "create user");
 
         const date= DOB.split("/");
-        if(date.length != 3)
-            throw new Error("Date is not in the right format");
+        if(date.length != 3 || date[2] < 1900 || date[1] < 1 || date[1] > 31 || date[0] < 1 || date[0] > 12 )
+            throw new Error("Date is not in the right format (mm/dd/yyyy)");
 
         const DateOfBirth = new Date(date[2], date[0] - 1, date[1]);
         const age = getAge(DateOfBirth);
@@ -46,7 +46,7 @@ const setUserPersonalInformation = async (req, res) => {
             throw new Error("Date is not valid")
         if(age < 16)
             throw new Error("User is too young")
-        if(age > 120)
+        if(age > 99)
             throw new Error("Date is not valid")
 
         user.personalInformation.firstName = firstName;
@@ -159,6 +159,8 @@ const ckeckExperienceValid = (user, title, description, years, months, isCurrent
     checkPropertyExists(months, "months", "number", "add experience");
     checkPropertyExists(isCurrent, "isCurrent", "boolean", "add experience");
     checkTags(skills, "skill tags");
+
+    console.log(skills, skills.length);
     if(skills.length > 5)
         throw new Error("Too many skill tags added")
     if(skills.length <= 0)
@@ -188,10 +190,13 @@ const setPreferences = async (req, res) => {
         checkPropertyExists(maxDistance, "maxDistance", "number");
         checkInRange(hoursPerWeek, "hoursPerWeek", 1, 40);
         checkInRange(hoursFlexibility, "hoursFlexibility", 1, 3); // 1 = rigid, 2 = normal, 3 = flexible
-        checkInRange(companySize, "companySize", 1, 100); // 1 = 1, 2 = 10, 3 = 50, 4 = 100, 5 = 500, 6 = inf
+        checkInRange(companySize, "companySize", 1, 6); // 1 = 1, 2 = 10, 3 = 50, 4 = 100, 5 = 500, 6 = inf
         checkPropertyExists(isInPerson, "isInPerson", "boolean");
         checkPropertyExists(isHybrid, "isHybrid", "boolean");
         checkPropertyExists(isRemote, "isRemote", "boolean");
+
+        if(! (isInPerson || isHybrid || isRemote))
+            throw new Error("Please select at least one from in Person, Hybrid, and Remote");
 
         user.preferences.maxDistance = maxDistance;
         user.preferences.hoursPerWeek = hoursPerWeek;
@@ -240,6 +245,7 @@ const setProfilePhoto = async (req, res) => {
 
         return res.status(200).json({'status': 'success', 'message':'successfully set profile picture'});
     } catch (err) {
+        console.log(err)
         res.status(400).json({'status': 'failure', 'message': err.message});
     }
 }
@@ -321,8 +327,8 @@ const completeUser = async (req, res) => {
 const getPublicInfo = async (id) => {
     const user = await userProfileSchema.findById(id);
     if( user ){
-        console.log( user.personalInformation)
-        const { DOB, location, ...personalInformation } = user.personalInformation; // ommit DOB and location
+        // console.log( user.personalInformation)
+        const personalInformation = omit(user.personalInformation, 'location', 'DOB');
 
         return {
             personalInformation,
@@ -337,7 +343,8 @@ const getCompleteInfo = async (req, res) => {
     try {
         const user = await getUserFromHeader(req);
 
-        const { status, ...ret } = user; // ommit status
+        // const { status, ...ret } = user; // ommit status
+        const ret = omit(user, 'status');
 
         return res.status(200).json({'status': 'success', 'message':'successfully got public user info', 'user': ret});
     } catch (err) {

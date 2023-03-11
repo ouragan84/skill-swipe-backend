@@ -26,20 +26,21 @@ const getCompanyFromHeader = async (req) => {
     return newCompany;
 }
 
+// TODO: check length too for string
 const setCompanyInformation = async (req, res) => {
     try {
         const company = await getCompanyFromHeader(req);
-        const {name, description, size, industry} = req.body;
+        const {name, description, size} = req.body;
 
         checkPropertyExists(name, "name", "string", "create company");
         checkPropertyExists(description, "description", "string", "create company");
         checkPropertyExists(size, "size", "number", "create company");
-        checkPropertyExists(industry, "industry", "string", "create company");
+        // checkPropertyExists(industry, "industry", "string", "create company");
 
         company.name = name;
         company.description = description;
         company.size = size;
-        company.industry = industry;
+        // company.industry = industry;
 
         if(!company.positions)
             company.positions = [];
@@ -47,6 +48,32 @@ const setCompanyInformation = async (req, res) => {
         await companyProfileSchema.findByIdAndUpdate(company._id, company);   
 
         return res.status(200).json({'status': 'success', 'message':'successfully set company information'});
+    } catch (err) {
+        res.status(400).json({'status': 'failure', 'message': err.message});
+    }
+}
+
+const setIndustry = async (req, res) => {
+    try {
+        const company = await getCompanyFromHeader(req);
+        const {industry} = req.body;
+
+        // checkPropertyExists(name, "name", "string", "create company");
+        // checkPropertyExists(description, "description", "string", "create company");
+        // checkPropertyExists(size, "size", "number", "create company");
+        checkPropertyExists(industry, "industry", "string", "create company");
+
+        // company.name = name;
+        // company.description = description;
+        // company.size = size;
+        company.industry = industry;
+
+        // if(!company.positions)
+        //     company.positions = [];
+
+        await companyProfileSchema.findByIdAndUpdate(company._id, company);   
+
+        return res.status(200).json({'status': 'success', 'message':'successfully set company industry'});
     } catch (err) {
         res.status(400).json({'status': 'failure', 'message': err.message});
     }
@@ -364,13 +391,18 @@ const getCompletePositionInfo = async (req, res) => {
 }
 
 const deleteCompanyProfile = async (id) => {
-    const company = companyProfileSchema.findById(id);
+    const company = await companyProfileSchema.findById(id);
     
     if(!company)
         throw new Error("Company Not Found");
 
-    deleteImage(company.profilePicture.name);
-    deleteImage(company.bannerPicture.name);
+    try{
+        deleteImage(company.profilePicture.name);
+    }catch{}
+
+    try{
+        deleteImage(company.bannerPicture.name);
+    }catch{}
 
     company.positions.forEach(async (pos) => {
         await positionSchema.deleteOne({_id: pos})
@@ -380,4 +412,4 @@ const deleteCompanyProfile = async (id) => {
 }
 
 module.exports = {setCompanyInformation, addPosition, editPosition, deletePosition, getPublicInfo, getCompleteInfo, getCompletePositionInfo,
-    getProfilePhoto, setProfilePhoto, getBannerPhoto, setBannerPhoto, getPublicPositionInfo, completeCompany, deleteCompanyProfile}
+    getProfilePhoto, setProfilePhoto, getBannerPhoto, setBannerPhoto, getPublicPositionInfo, completeCompany, deleteCompanyProfile, setIndustry}

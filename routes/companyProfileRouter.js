@@ -7,6 +7,9 @@ const router = express.Router();
 router.use('/set/company-information', auth.checkConsumerConfirmedAuth);
 router.post('/set/company-information', companyProfileService.setCompanyInformation);
 
+router.use('/set/industry', auth.checkConsumerConfirmedAuth);
+router.post('/set/industry', companyProfileService.setIndustry);
+
 router.use('/set/profile-picture', auth.checkConsumerConfirmedAuth);
 router.post('/set/profile-picture', companyProfileService.setProfilePhoto);
 
