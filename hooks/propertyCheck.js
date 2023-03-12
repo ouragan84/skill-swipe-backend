@@ -3,6 +3,9 @@ const jobTags = require('../models/positionTags');
 const checkPropertyExists = (property, propertyName, expectedType, action="create user") => {
     if(typeof(property) != expectedType)
         throw new Error(`Could not ${action}, ${propertyName} was not specified`);
+
+    if(expectedType === 'string' && property.length == 0)
+        throw new Error(`Could not ${action}, ${propertyName} was not specified`);
 }
 
 const checkInRange = (range, rangeName, lower, upper, action="create user") => {

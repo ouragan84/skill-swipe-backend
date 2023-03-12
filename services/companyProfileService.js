@@ -179,6 +179,10 @@ const checkPositionValid = async (position, title, description, payRange, hoursP
     checkInRange(monthsRelevantExperience, "monthsRelevantExperience", 0, 240, "create position");
 
     checkPropertyExists(skillsImportance, "skillsImportance", "object", "create position");
+
+    if(skills.length <= 0)
+        throw new Error("Please add at least one skill");
+
     if(skillsImportance.length != skills.length)
         throw new Error("skillsImportance must have as many elements as skills");
 
