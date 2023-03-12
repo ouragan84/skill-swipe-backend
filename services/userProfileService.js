@@ -87,6 +87,7 @@ const setLocation = async (req, res) => {
 
         return res.status(200).json({'status': 'success', 'message':'successfully set location'});
     } catch (err) {
+        console.log("error from location: ", err)
         res.status(400).json({'status': 'failure', 'message': err.message});
     }
 }
