@@ -11,6 +11,11 @@ const rootRoutes = require('./routes/rootRouter');
 const userRoutes = require('./routes/userProfilesRouter');
 const companyRoutes = require('./routes/companyProfileRouter');
 const consumerRoutes = require('./routes/consumerRouter');
+const socket = require('./routes/socketRouter');
+
+// const userRecommendationRoutes = require('./routes/userRecommendationRouter');
+
+
 
 // To prevent NODE from crashing 
 process.on('uncaughtException', function (err) {
@@ -48,11 +53,15 @@ app.use('/', rootRoutes);
 app.use('/user', userRoutes);
 app.use('/company', companyRoutes);
 app.use('/consumer', consumerRoutes);
+app.use('/main', socket.router);
+
+
 
 // start listening for connections
 mongoose.connection.once('open', () => {
     console.log('Connected to mongoDB')
-    app.listen(process.env.PORT, ()=>{
+    const httpServer = app.listen(process.env.PORT, ()=>{
         console.log('Server started on port ' + process.env.PORT);
     });
+    socket.createSocket(httpServer)
 })

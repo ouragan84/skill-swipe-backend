@@ -21,4 +21,16 @@ const getCityFromLocation = async (location) => {
     return res.city;
 }
 
-module.exports = {getCityFromLocation};
+const getDistance = (loc1, loc2) => {
+    // in rad
+    const lat1 = loc1[0] * Math.PI / 180; 
+    const lat2 = loc2[0] * Math.PI / 180;
+    const lon1 = loc1[1] * Math.PI / 180;
+    const lon2 = loc2[1] * Math.PI / 180;
+
+    const d = Math.acos( Math.sin(lat1)*Math.sin(lat2) + Math.cos(lat1)*Math.cos(lat2)*Math.cos(lon2-lon1) ) * 6371; // in km
+
+    return d * 0.621371; // in miles 
+}
+
+module.exports = {getCityFromLocation, getDistance};

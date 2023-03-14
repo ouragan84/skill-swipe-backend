@@ -146,4 +146,4 @@ const checkConsumerCompleteAuth = async (req, res, next) => {
 
 module.exports = {generateSessionToken, getConfirmationToken, checkConfirmationToken, 
   checkConsumerCompleteAuth, checkConsumerConfirmedAuth, checkConsumerPrototypeAuth,
-  getPWResetCode, checkPWResetCode, getTokenFromHeader};
+  getPWResetCode, checkPWResetCode, getTokenFromHeader, getConsumerFromSessionToken};
