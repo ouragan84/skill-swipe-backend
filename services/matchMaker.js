@@ -8,7 +8,7 @@ const {getPublicInfo} = require('./userProfileService');
 
 
 // TODO: In the future use a redis cache for faster fetches
-const getListPositions = async (user, size) => {
+const getListPositions = async (user /*, size*/) => {
 
     let list = Array(size).fill({card: null, score: -1});
     let allPositions = (await positionSchema.find()); // yikes
@@ -24,16 +24,17 @@ const getListPositions = async (user, size) => {
 
         // console.log(`-> ${pos.information.title} = ${score}  -  ${distance} mi`)
 
-        for(let i = 0; i < list.length; ++i){
+        let i;
+        for(i = 0; i < list.length; ++i){
             if(score > list[i].score){
-                const card = (await getPublicPositionInfo(pos._id));
-                card.distance = distance;
-                list.splice(i,0,{card, score});
-                list.pop(size-1);
                 // console.log(`   ADDING in ${i}th position : ${list.toString()}` )
                 break;
             }
         }
+
+        const card = (await getPublicPositionInfo(pos._id));
+        card.distance = distance;
+        list.splice(i,0,{card, score});
     }
 
     // ADD DISTANCE TO CARDS
@@ -53,8 +54,8 @@ const getListPositions = async (user, size) => {
     // would handle looking at how many applicants we show job to in this function
 }
 
-const getListUsers = async (position, size) => {
-    let list = Array(size).fill({card: null, score: -1});
+const getListUsers = async (position/*, size*/) => {
+    let list = [];//Array(size).fill({card: null, score: -1});
 
     let allApplicants = Array.from(position.status.applicants, ([key]) => (key));
     
@@ -64,15 +65,17 @@ const getListUsers = async (position, size) => {
 
         const {score, distance} = getCompatibilityScore(user, position);
 
-        for(let i = 0; i < list.length; ++i){
-            if(score > element.score){
-                const card = await getPublicInfo(user.id);
-                card.distance = distance;
-                list.splice(i,0,{card, score});
-                list.pop();
+        let i;
+        for(i = 0; i < list.length; ++i){
+            if(score > element.score)
                 break;
-            }
         }
+
+        const card = await getPublicInfo(user.id);
+        card.distance = distance;
+        list.splice(i,0,{card, score});
+        // list.pop();
+        break;
     }
 
     let listOfCards = []
@@ -80,7 +83,6 @@ const getListUsers = async (position, size) => {
     list.forEach(c => {
         listOfCards.push(c.card);
         console.log(" -> " + (c.card ? c.card.positionInfo.title : "null"))
-
     });
 
     return listOfCards;
