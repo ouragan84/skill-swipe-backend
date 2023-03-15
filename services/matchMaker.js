@@ -3,72 +3,96 @@ const positionSchema = require('../models/position');
 const consumerSchema = require('../models/consumer');
 const companyProfileSchema = require('../models/companyProfile');
 const {getDistance} = require('../hooks/locationHandler');
-const positionSchema = require('../models/position');
 const {getPublicPositionInfo} = require('./companyProfileService');
 const {getPublicInfo} = require('./userProfileService');
 
 
 // TODO: In the future use a redis cache for faster fetches
-const getNextPosition = async (user) => {
-    const max1 = {id: null, score: 0};
-    const max2 = {id: null, score: 0};
+const getListPositions = async (user, size) => {
 
-    (await positionSchema.find()).forEach( (pos) => {
+    let list = Array(size).fill({card: null, score: -1});
+    let allPositions = (await positionSchema.find()); // yikes
+
+    for(let j = 0; j < allPositions.length; ++j){
+
+        const pos = allPositions[j];
+
         if(user.status.liked.has(pos._id) || user.status.interviewing.has(pos._id) || user.status.rejected.has(pos._id))
             return;
 
-        const score = getCompatibilityScore(user, pos);
-        if(score > max1.score){
-            if(max1.score > max2.score){
-                max2.id = max1.id;
-                max2.score = max1.score;
-            }
-            max1.id = pos._id;
-            max1.score = score;
-        }else if(score > max2.score){
-            max2.id = pos._id;
-            max2.score = score;
-        }
-    })
+        const {score, distance} = getCompatibilityScore(user, pos);
 
-    return {firstCard: max1.id? getPublicPositionInfo(max1._id) : null, secondCard: max2.id? getPublicPositionInfo(max2._id) : null}
+        // console.log(`-> ${pos.information.title} = ${score}  -  ${distance} mi`)
+
+        for(let i = 0; i < list.length; ++i){
+            if(score > list[i].score){
+                const card = (await getPublicPositionInfo(pos._id));
+                card.distance = distance;
+                list.splice(i,0,{card, score});
+                list.pop(size-1);
+                // console.log(`   ADDING in ${i}th position : ${list.toString()}` )
+                break;
+            }
+        }
+    }
+
+    // ADD DISTANCE TO CARDS
+    // return {firstCard: max1.id? getPublicPositionInfo(max1._id) : null, secondCard: max2.id? getPublicPositionInfo(max2._id) : null}
+
+    let listOfCards = []
+
+    list.forEach(c => {
+        listOfCards.push(c.card);
+        console.log(" -> " + (c.card ? c.card.positionInfo.title : "null"))
+    });
+
+    console.l
+
+    return listOfCards;
 
     // would handle looking at how many applicants we show job to in this function
 }
 
-const getNextUser = async (position) => {
-    const max1 = {id: null, score: 0};
-    const max2 = {id: null, score: 0};
+const getListUsers = async (position, size) => {
+    let list = Array(size).fill({card: null, score: -1});
 
-    position.status.applicants.forEach( async (value, key, map) => {
-
-        const user = await userProfileSchema.findById(value);
-
-        const score = getCompatibilityScore(user, position);
-        if(score > max1.score){
-            if(max1.score > max2.score){
-                max2.id = max1.id;
-                max2.score = max1.score;
-            }
-            max1.id = user._id;
-            max1.score = score;
-        }else if(score > max2.score){
-            max2.id = user._id;
-            max2.score = score;
-        }
-    })
-
-    return {firstCard: max1.id? getPublicInfo(max1._id) : null, secondCard: max2.id? getPublicInfo(max2._id) : null}
+    let allApplicants = Array.from(position.status.applicants, ([key]) => (key));
     
+    for(let j = 0; j < allApplicants.length; ++j){
+
+        const user = await userProfileSchema.findById(allApplicants[i]);
+
+        const {score, distance} = getCompatibilityScore(user, position);
+
+        for(let i = 0; i < list.length; ++i){
+            if(score > element.score){
+                const card = await getPublicInfo(user.id);
+                card.distance = distance;
+                list.splice(i,0,{card, score});
+                list.pop();
+                break;
+            }
+        }
+    }
+
+    let listOfCards = []
+
+    list.forEach(c => {
+        listOfCards.push(c.card);
+        console.log(" -> " + (c.card ? c.card.positionInfo.title : "null"))
+
+    });
+
+    return listOfCards;
 }
 
 const getCompatibilityScore = (user, position) => {
     let score = 1;
-    const dist = getDistance(user);
+    const dist = getDistance(user.personalInformation.location, position.settings.location);
     if(dist > user.preferences.maxDistance)
         score *= 0.5;
     else
-        score *= 1 - (1-.8) * dist / user.preferences.maxDistance;
+        score *= 1;
 
     score *= (position.information.isInPerson == user.preferences.isInPerson)? 1 : 0.8;
     score *= (position.information.isHybrid == user.preferences.isHybrid)? 1 : 0.8;
@@ -81,11 +105,13 @@ const getCompatibilityScore = (user, position) => {
     const months = getRelevantExperience(user, position);
 
     if(months < position.settings.monthsRelevantExperience[0])
-        score *= months/position.settings.monthsRelevantExperience[0];
+        score *= 0.6;//months/position.settings.monthsRelevantExperience[0];
     else if(months > position.settings.monthsRelevantExperience[1])
-        score *= position.settings.monthsRelevantExperience[1]/months; 
+        score *= 0.8;//position.settings.monthsRelevantExperience[1]/months; 
+    else
+        score *= 1;
 
-    return score;
+    return {score, distance: dist};
 }
 
 const applyToPosition = async (user, position) => {
@@ -158,18 +184,20 @@ const getRelevantExperience = (user, position) => {
         months += expImp * exp.months;
     });
 
+    // console.log(months)
+
     return months;
 }
 
 const compareRanges = (r1, r2) => {
-    const score = 1;
+    let score = 1;
 
     if(r1[0] > r2[0] && r1[0] < r2[1])
         score *= 1;
     else
         score *= 0.9;
 
-    if(r[1] > r2[0] && r1[1] < r2[1])
+    if(r1[1] > r2[0] && r1[1] < r2[1])
         score *= 1;
     else
         score *= 0.9;
@@ -177,4 +205,4 @@ const compareRanges = (r1, r2) => {
     return score;
 }
 
-module.exports = {getNextPosition, getNextUser, applyToPosition, rejectPosition, acceptApplicant, rejectApplicant}
+module.exports = {getListPositions, getListUsers, applyToPosition, rejectPosition, acceptApplicant, rejectApplicant}

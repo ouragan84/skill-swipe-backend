@@ -2,7 +2,7 @@
 const socketio = require('socket.io');
 const auth = require('../hooks/authMiddleware');
 const matchMaker = require('../services/matchMaker');
-const chatHandler = require('../hooks/chatHandler');
+const chatHandler = require('../services/chatHandler');
 
 const express = require('express');
 const userProfileSchema = require('../models/userProfile');
@@ -81,8 +81,8 @@ const checkPosition = async (req, res, next) => {
 
 router.use('/user/get/cards', auth.checkConsumerCompleteAuth, checkUser)
 router.get('/user/get/cards', async (req, res) => {
-    const position = await positionSchema.findById(req.body.positionId);
-    const ret = matchMaker.getNextPosition(req.user, position);
+    // const position = await positionSchema.findById(req.body.positionId);
+    const ret = await matchMaker.getListPositions(req.user, 20);
     res.status(200).send({'status': 'success', 'message': 'method successful', 'cards': ret});
 });
 
@@ -99,14 +99,15 @@ router.post('/user/apply/position', async (req, res) => {
     const position = await positionSchema.findById(req.body.positionId);
     matchMaker.applyToPosition(req.user, position);
     // io send update to company
-    io.to(onlineUsersReversed.get(position.information.companyId)).emit('new-applicant');
+    if(onlineUsersReversed.has(position.information.companyId))
+        io.to(onlineUsersReversed.get(position.information.companyId)).emit('new-applicant');
     res.status(200).send({'status': 'success', 'message': 'method successful'});
 });
 
 router.use('/company/get/cards', auth.checkConsumerCompleteAuth, checkPosition)
 router.get('/company/get/cards', async (req, res) => {
-    const user = await userProfileSchema.findById(req.body.userId);
-    const ret = matchMaker.getNextUser(req.position, user);
+    // const user = await userProfileSchema.findById(req.body.userId);
+    const ret = matchMaker.getNextUser(req.position, 20);
     res.status(200).send({'status': 'success', 'message': 'method successful', 'cards': ret});
 });
 
@@ -123,7 +124,8 @@ router.post('/company/accept/applicant', async (req, res) => {
     const user = await userProfileSchema.findById(req.body.userId);
     matchMaker.acceptApplicant(req.position, user);
     // io send update to user
-    io.to(onlineUsersReversed.get(user._id)).emit('new-match');
+    if(onlineUsersReversed.has(user._id))
+        io.to(onlineUsersReversed.get(user._id)).emit('new-match');
     res.status(200).send({'status': 'success', 'message': 'method successful'});
 });
 
