@@ -21,13 +21,13 @@ const companyProfileSchema = new Schema({
     profilePicture:{
         name:{
             type: String,
-            default: 'default'
+            default: 'default-company-profile.jpg'
         }
     },
     bannerPicture:{
         name:{
             type: String,
-            default: 'default'
+            default: 'default-company-banner.jpg'
         }
     },
     positions:{

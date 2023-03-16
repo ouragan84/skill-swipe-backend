@@ -30,24 +30,10 @@ const uploadImage = async (body, headers, width, height) => {
   const imageName = generateFileName()
 
   const image = Buffer.from( body, 'base64');
-  // const buf = new Buffer(body.replace(/^data:image/\w+;base64,/, ""),'base64')
-
-
-  // const image = body;
-
-  // console.log(image)
-
-  // console.log("1", contentType, image);
-
-  // console.log(image.toLocaleString)
 
   const fileBuffer = await sharp(image)
     .resize({ height, width, fit: 'cover' }) // more info: https://sharp.pixelplumbing.com/api-resize
     .toBuffer()
-
-  // const fileBuffer = image;
-
-    // console.log("2")
 
   const uploadParams = {
     Bucket: bucketName,
@@ -56,42 +42,42 @@ const uploadImage = async (body, headers, width, height) => {
     Body: fileBuffer,
     ContentEncoding: 'base64', // important to tell that the incoming buffer is base64
     ContentType: contentType, // e.g. "image/jpeg" or "image/png"
+    ACL:'public-read'
   }
 
-  // console.log("3")
-
-  
   await s3Client.send(new PutObjectCommand(uploadParams))
   
-  //res.status(201).send(post)
   console.log("created post record");
 
-  // return res.status(201).json({'message':'Registeration Successfull'})
   return imageName;
 }
 
-const getImage = async (imageName, defaultImage) => {
+// const getImage = async (imageName, defaultImage) => {
 
-  if(imageName === 'default')
-    return `${process.env.OWN_URL}/static/${defaultImage}`;
+//   if(imageName === 'default')
+//     return `${process.env.OWN_URL}/static/${defaultImage}`;
 
-  const params = {
-    Bucket: bucketName,
-    Key: imageName
-  }
+//   const params = {
+//     Bucket: bucketName,
+//     Key: imageName
+//   }
 
-  const command = new GetObjectCommand(params);
-  const seconds = 60
-  url = await getSignedUrl(s3Client, command, { expiresIn: seconds });
+//   const command = new GetObjectCommand(params);
+//   const seconds = 60
+//   url = await getSignedUrl(s3Client, command, { expiresIn: seconds });
 
-  if(url)
-    return url;
+//   if(url)
+//     return url;
   
-  throw new Error("Image not Found");
+//   throw new Error("Image not Found");
 
-}
+// }
 
 const deleteImage = async (imageName) => {
+  // those images are permanant and used for every user
+  if(imageName.startsWith("default"))
+    return;
+
   const deleteParams = {
     Bucket: bucketName,
     Key: imageName,
@@ -102,16 +88,15 @@ const deleteImage = async (imageName) => {
 
 // TODO: Wait until upload is successfull to delete old image
 const updateImage = async (imageName, body, headers, width, height) => {
+  const newName = await uploadImage(body, headers, width, height);
+  
   try{
     await deleteImage(imageName);
   } catch (ignore) {
 
   }
 
-  console.log("hey")
-
-  const newName = await uploadImage(body, headers, width, height);
   return newName;
 }
 
-module.exports = {uploadImage, getImage, deleteImage, updateImage}
+module.exports = {uploadImage, deleteImage, updateImage}

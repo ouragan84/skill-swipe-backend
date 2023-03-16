@@ -85,22 +85,18 @@ const positionSchema = new Schema({
     status:{
         applicants:{
             type: Map,
-            of: mongoose.Types.ObjectId,
             default: {}
         },
         interviewees:{
             type: Map,
-            of: mongoose.Types.ObjectId,
             default: {}
         },
         employed:{
             type: Map,
-            of: mongoose.Types.ObjectId,
             default: {}
         },
         rejected:{
             type: Map,
-            of: mongoose.Types.ObjectId,
             default: {}
         },
     }

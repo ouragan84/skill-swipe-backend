@@ -10,15 +10,18 @@ const {getPublicInfo} = require('./userProfileService');
 // TODO: In the future use a redis cache for faster fetches
 const getListPositions = async (user /*, size*/) => {
 
-    let list = Array(size).fill({card: null, score: -1});
+    let list = [];//Array(size).fill({card: null, score: -1});
+
     let allPositions = (await positionSchema.find()); // yikes
 
     for(let j = 0; j < allPositions.length; ++j){
 
         const pos = allPositions[j];
 
-        if(user.status.liked.has(pos._id) || user.status.interviewing.has(pos._id) || user.status.rejected.has(pos._id))
-            return;
+        if(user.status.liked.has(`${pos._id}`) || user.status.interviewing.has(`${pos._id}`) || user.status.rejected.has(`${pos._id}`)){
+            console.log("HEY")
+            continue;
+        }
 
         const {score, distance} = getCompatibilityScore(user, pos);
 
@@ -34,6 +37,7 @@ const getListPositions = async (user /*, size*/) => {
 
         const card = (await getPublicPositionInfo(pos._id));
         card.distance = distance;
+        card.id = pos._id;
         list.splice(i,0,{card, score});
     }
 
@@ -73,9 +77,8 @@ const getListUsers = async (position/*, size*/) => {
 
         const card = await getPublicInfo(user.id);
         card.distance = distance;
+        card.id = pos._id;
         list.splice(i,0,{card, score});
-        // list.pop();
-        break;
     }
 
     let listOfCards = []
@@ -122,6 +125,9 @@ const applyToPosition = async (user, position) => {
     user.status.liked.set(position._id, {time});
     position.status.applicants.set(user._id, {time});
 
+    // console.log("USER AFTER APPLY: ", user, user.status.liked, user.status.rejected)
+    // console.log("POS AFTER APPLY: ", position, position.status.applicants)
+
     await positionSchema.findByIdAndUpdate(position._id, position);
     await userProfileSchema.findByIdAndUpdate(user._id, user);
 }
@@ -130,6 +136,9 @@ const rejectPosition = async (user, position) => {
     const time = Date.now();
 
     user.status.rejected.set(position._id, {time})
+
+    // console.log("USER AFTER REJECT: ", user, user.status.liked, user.status.rejected)
+    // console.log("POS AFTER REJECT: ", position, position.status.applicants)
 
     await userProfileSchema.findByIdAndUpdate(user._id, user);
 }
