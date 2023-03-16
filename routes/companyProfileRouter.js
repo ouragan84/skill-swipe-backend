@@ -13,8 +13,8 @@ router.post('/set/industry', companyProfileService.setIndustry);
 router.use('/set/profile-picture', auth.checkConsumerConfirmedAuth);
 router.post('/set/profile-picture', companyProfileService.setProfilePhoto);
 
-router.use('/get/profile-picture', auth.checkConsumerConfirmedAuth);
-router.get('/get/profile-picture', companyProfileService.getProfilePhoto);
+// router.use('/get/profile-picture', auth.checkConsumerConfirmedAuth);
+// router.get('/get/profile-picture', companyProfileService.getProfilePhoto);
 
 router.use('/add/position', auth.checkConsumerConfirmedAuth);
 router.post('/add/position', companyProfileService.addPosition);
@@ -28,8 +28,8 @@ router.delete('/delete/position/:index', companyProfileService.deletePosition);
 router.use('/set/banner-picture', auth.checkConsumerConfirmedAuth);
 router.post('/set/banner-picture', companyProfileService.setBannerPhoto);
 
-router.use('/get/banner-picture', auth.checkConsumerConfirmedAuth);
-router.get('/get/banner-picture', companyProfileService.getBannerPhoto);
+// router.use('/get/banner-picture', auth.checkConsumerConfirmedAuth);
+// router.get('/get/banner-picture', companyProfileService.getBannerPhoto);
 
 router.use('/check-complete', auth.checkConsumerConfirmedAuth);
 router.get('/check-complete', companyProfileService.completeCompany);

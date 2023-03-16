@@ -56,7 +56,7 @@ const userProfileSchema = new Schema({
     profilePicture:{
         name:{
             type: String,
-            default: 'default'
+            default: 'default-user-profile.jpg'
         }
     },
     consumerId:{
@@ -100,17 +100,14 @@ const userProfileSchema = new Schema({
     status:{
         liked:{
             type: Map,
-            of: mongoose.Types.ObjectId,
             default: {}
         },
         interviewing:{
             type: Map,
-            of: mongoose.Types.ObjectId,
             default: {}
         },
         rejected:{
             type: Map,
-            of: mongoose.Types.ObjectId,
             default: {}
         },
     }

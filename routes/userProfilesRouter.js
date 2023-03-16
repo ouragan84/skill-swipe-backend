@@ -44,8 +44,8 @@ router.post('/set/skill-preferences', userProfileService.setSkillPreferences);
 router.use('/set/description', auth.checkConsumerConfirmedAuth);
 router.post('/set/description', userProfileService.setDescription);
 
-router.use('/get/profile-picture', auth.checkConsumerConfirmedAuth);
-router.get('/get/profile-picture', userProfileService.getProfilePhoto);
+// router.use('/get/profile-picture', auth.checkConsumerConfirmedAuth);
+// router.get('/get/profile-picture', userProfileService.getProfilePhoto);
 
 router.use('/check-complete', auth.checkConsumerConfirmedAuth);
 router.get('/check-complete', userProfileService.completeUser);

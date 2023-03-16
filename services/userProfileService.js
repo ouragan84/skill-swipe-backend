@@ -4,7 +4,7 @@ const userProfileSchema = require('../models/userProfile');
 const consumerSchema = require('../models/consumer');
 
 const {checkPropertyExists, checkInRange, checkTags} = require('../hooks/propertyCheck');
-const {uploadImage, updateImage, getImage, deleteImage} = require('../hooks/imageHandler');
+const {uploadImage, updateImage, deleteImage} = require('../hooks/imageHandler');
 const {getCityFromLocation} = require('../hooks/locationHandler');
 const {omit} = require('../hooks/objectHelper');
 
@@ -251,17 +251,17 @@ const setProfilePhoto = async (req, res) => {
     }
 }
 
-const getProfilePhoto = async (req, res) => {
-    try {
-        const user = await getUserFromHeader(req);
+// const getProfilePhoto = async (req, res) => {
+//     try {
+//         const user = await getUserFromHeader(req);
 
-        const url = await getImage(user.profilePicture.name, 'default-user-profile.jpg');
+//         const url = await getImage(user.profilePicture.name, 'default-user-profile.jpg');
         
-        return res.status(200).json({'status': 'success', 'message':'successfully got picture url', 'pictureUrl': url});
-    } catch (err) {
-        res.status(400).json({'status': 'failure', 'message': err.message});
-    }
-}
+//         return res.status(200).json({'status': 'success', 'message':'successfully got picture url', 'pictureUrl': url});
+//     } catch (err) {
+//         res.status(400).json({'status': 'failure', 'message': err.message});
+//     }
+// }
 
 const setDescription = async (req, res) => {
     try {
@@ -365,4 +365,4 @@ const deleteUserProfile = async (id) => {
 }
 
 module.exports = {setUserPersonalInformation, addExperience, setLocation, setPreferences, setSkillPreferences, getCompleteInfo,
-    setProfilePhoto, setDescription, getProfilePhoto, getPublicInfo, completeUser, editExperience, deleteExperience, deleteUserProfile}
+    setProfilePhoto, setDescription, getPublicInfo, completeUser, editExperience, deleteExperience, deleteUserProfile}

@@ -6,7 +6,7 @@ const consumerSchema = require('../models/consumer');
 const {omit} = require('../hooks/objectHelper');
 
 const {checkPropertyExists, checkInRange, checkTags} = require('../hooks/propertyCheck');
-const {uploadImage, updateImage, getImage, deleteImage} = require('../hooks/imageHandler');
+const {uploadImage, updateImage, deleteImage} = require('../hooks/imageHandler');
 const {getCityFromLocation} = require('../hooks/locationHandler');
 
 const getCompanyFromHeader = async (req) => {
@@ -262,17 +262,17 @@ const setProfilePhoto = async (req, res) => {
     }
 }
 
-const getProfilePhoto = async (req, res) => {
-    try {
-        const company = await getCompanyFromHeader(req);
+// const getProfilePhoto = async (req, res) => {
+//     try {
+//         const company = await getCompanyFromHeader(req);
 
-        const url = await getImage(company.profilePicture.name, 'default-company-profile.jpg');
+//         const url = await getImage(company.profilePicture.name, 'default-company-profile.jpg');
         
-        return res.status(200).json({'status': 'success', 'message':'successfully got picture url', 'pictureUrl': url});
-    } catch (err) {
-        res.status(400).json({'status': 'failure', 'message': err.message});
-    }
-}
+//         return res.status(200).json({'status': 'success', 'message':'successfully got picture url', 'pictureUrl': url});
+//     } catch (err) {
+//         res.status(400).json({'status': 'failure', 'message': err.message});
+//     }
+// }
 
 const setBannerPhoto = async (req, res) => {
     try {
@@ -290,18 +290,18 @@ const setBannerPhoto = async (req, res) => {
     }
 }
 
-const getBannerPhoto = async (req, res) => {
-    try {
-        const company = await getCompanyFromHeader(req);
+// const getBannerPhoto = async (req, res) => {
+//     try {
+//         const company = await getCompanyFromHeader(req);
 
-        const url = await getImage(company.bannerPicture.name, 'default-company-banner.jpg');
+//         const url = await getImage(company.bannerPicture.name, 'default-company-banner.jpg');
         
-        return res.status(200).json({'status': 'success', 'message':'successfully got picture url', 'pictureUrl': url});
-    } catch (err) {
-        console.error(err)
-        res.status(400).json({'status': 'failure', 'message': err.message});
-    }
-}
+//         return res.status(200).json({'status': 'success', 'message':'successfully got picture url', 'pictureUrl': url});
+//     } catch (err) {
+//         console.error(err)
+//         res.status(400).json({'status': 'failure', 'message': err.message});
+//     }
+// }
 
 const getPublicInfo = async (id) => {
     const company = await companyProfileSchema.findById(id);
@@ -415,5 +415,5 @@ const deleteCompanyProfile = async (id) => {
     await companyProfileSchema.deleteOne({_id: id})
 }
 
-module.exports = {setCompanyInformation, addPosition, editPosition, deletePosition, getPublicInfo, getCompleteInfo, getCompletePositionInfo,
-    getProfilePhoto, setProfilePhoto, getBannerPhoto, setBannerPhoto, getPublicPositionInfo, completeCompany, deleteCompanyProfile, setIndustry}
+module.exports = {setCompanyInformation, addPosition, editPosition, deletePosition, getPublicInfo, getCompleteInfo, 
+    getCompletePositionInfo, setProfilePhoto, setBannerPhoto, getPublicPositionInfo, completeCompany, deleteCompanyProfile, setIndustry}
