@@ -18,8 +18,14 @@ const getListPositions = async (user /*, size*/) => {
 
         const pos = allPositions[j];
 
+        const pos_company = await companyProfileSchema.findById(pos.information.companyId);
+        const pos_consumer = await consumerSchema.findById(pos_company.consumerId);
+
+        if(!pos_consumer.isAccountComplete)
+            continue;
+
         if(user.status.liked.has(`${pos._id}`) || user.status.interviewing.has(`${pos._id}`) || user.status.rejected.has(`${pos._id}`)){
-            console.log("HEY")
+            // console.log("HEY")
             continue;
         }
 
