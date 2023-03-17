@@ -9,6 +9,10 @@ const userProfileSchema = require('../models/userProfile');
 const positionSchema = require('../models/position');
 const companyProfileSchema = require('../models/companyProfile');
 
+const companyProfileService = require('../services/companyProfileService');
+const userProfileService = require('../services/userProfileService');
+
+
 
 const router = express.Router();
 
@@ -135,10 +139,15 @@ router.get('/user/get/matches', async (req, res) => {
     const matchesId = Array.from(req.user.status.interviewing, ([key]) => (key));;
     let matches = [];
 
+    console.log("company match ids: ", matchesId)
+
     for(let i = 0; i < matchesId.length; ++i){
-        const m = await positionSchema.findById(matchesId[i]);
+        const m = await companyProfileService.getPublicPositionInfo(matchesId[i]);//positionSchema.findById(matchesId[i]);
         matches.push(m)
     }
+
+    console.log("company matches: ", matches)
+
 
     res.status(200).send({'status': 'success', 'message': 'method successful', 'matches': matches});
 });
@@ -148,10 +157,14 @@ router.get('/company/get/matches', async (req, res) => {
     const matchesId = Array.from(req.user.position.interviewees, ([key]) => (key));;
     let matches = [];
 
+    console.log("user match ids: ", matchesId)
+
     for(let i = 0; i < matchesId.length; ++i){
-        const m = await userProfileSchema.findById(matchesId[i]);
+        const m = await userProfileService.getPublicInfo(matchesId[i]);//userProfileSchema.findById(matchesId[i]);
         matches.push(m)
     }
+
+    console.log("user matches: ", matches)
 
     res.status(200).send({'status': 'success', 'message': 'method successful', 'matches': matches});
 });
