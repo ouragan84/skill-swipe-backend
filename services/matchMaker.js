@@ -68,12 +68,18 @@ const getListUsers = async (position/*, size*/) => {
     let list = [];//Array(size).fill({card: null, score: -1});
 
     let allApplicants = Array.from(position.status.applicants, ([key]) => (key));
+
+    console.log("allApplicants: ", allApplicants)
     
     for(let j = 0; j < allApplicants.length; ++j){
 
         const user = await userProfileSchema.findById(allApplicants[j]);
 
+        console.log("user", j, ": ", user)
+
         const {score, distance} = getCompatibilityScore(user, position);
+
+        console.log("score", score)
 
         let i;
         for(i = 0; i < list.length; ++i){
@@ -81,9 +87,14 @@ const getListUsers = async (position/*, size*/) => {
                 break;
         }
 
+        console.log("i: ", i)
+
         const card = await getPublicInfo(user.id);
         card.distance = distance;
         card.id = user._id;
+
+        console.log("card: ", card)
+
         list.splice(i,0,{card, score});
     }
 
