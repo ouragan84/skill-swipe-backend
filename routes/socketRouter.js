@@ -107,15 +107,15 @@ router.post('/user/apply/position', async (req, res) => {
 router.use('/company/get/cards/:index', auth.checkConsumerCompleteAuth, checkPosition)
 router.get('/company/get/cards/:index', async (req, res) => {
     // const user = await userProfileSchema.findById(req.body.userId);
-    const ret = matchMaker.getListUsers(req.position);
-    console.log(`/company/get/cards/${req.params.index} returned:`, ret)
+    const ret = await matchMaker.getListUsers(req.position);
+    // console.log(`/company/get/cards/${req.params.index} returned:`, ret)
     res.status(200).send({'status': 'success', 'message': 'method successful', 'cards': ret});
 });
 
 router.use('/company/reject/applicant/:index', auth.checkConsumerCompleteAuth, checkPosition)
 router.post('/company/reject/applicant/:index', async (req, res) => {
     let user = await userProfileSchema.findById(req.body.userId);
-    matchMaker.rejectApplicant(req.position, user);
+    await matchMaker.rejectApplicant(req.position, user);
     // io.to(onlineUsersReversed.get(user._id)).emit('remove-match');
     res.status(200).send({'status': 'success', 'message': 'successfully accepted applicant'});
 });
@@ -123,7 +123,7 @@ router.post('/company/reject/applicant/:index', async (req, res) => {
 router.use('/company/accept/applicant/:index', auth.checkConsumerCompleteAuth, checkPosition)
 router.post('/company/accept/applicant/:index', async (req, res) => {
     let user = await userProfileSchema.findById(req.body.userId);
-    matchMaker.acceptApplicant(req.position, user);
+    await matchMaker.acceptApplicant(req.position, user);
     // io send update to user
     if(onlineUsersReversed.has(user._id))
         io.to(onlineUsersReversed.get(user._id)).emit('new-match');
