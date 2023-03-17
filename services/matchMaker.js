@@ -91,7 +91,7 @@ const getListUsers = async (position/*, size*/) => {
 
     list.forEach(c => {
         listOfCards.push(c.card);
-        console.log(" -> " + (c.card ? c.card.name : "null"))
+        console.log(" -> " + (c.card ? c.card.firstName + ' ' + c.card.lastName : "null"))
     });
 
     return listOfCards;
