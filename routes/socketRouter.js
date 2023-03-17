@@ -108,6 +108,7 @@ router.use('/company/get/cards/:index', auth.checkConsumerCompleteAuth, checkPos
 router.get('/company/get/cards/:index', async (req, res) => {
     // const user = await userProfileSchema.findById(req.body.userId);
     const ret = matchMaker.getListUsers(req.position);
+    console.log(`/company/get/cards/${req.params.index} returned:`, ret)
     res.status(200).send({'status': 'success', 'message': 'method successful', 'cards': ret});
 });
 
