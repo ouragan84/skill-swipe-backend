@@ -154,7 +154,7 @@ router.get('/user/get/matches', async (req, res) => {
 
 router.use('/company/get/matches/:index', auth.checkConsumerCompleteAuth, checkPosition)
 router.get('/company/get/matches/:index', async (req, res) => {
-    const matchesId = Array.from(req.user.position.interviewees, ([key]) => (key));;
+    const matchesId = Array.from(req.position.status.interviewees, ([key]) => (key));;
     let matches = [];
 
     console.log("user match ids: ", matchesId)
