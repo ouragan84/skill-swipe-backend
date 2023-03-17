@@ -139,14 +139,14 @@ router.get('/user/get/matches', async (req, res) => {
     const matchesId = Array.from(req.user.status.interviewing, ([key]) => (key));;
     let matches = [];
 
-    console.log("company match ids: ", matchesId)
+    // console.log("company match ids: ", matchesId)
 
     for(let i = 0; i < matchesId.length; ++i){
         const m = await companyProfileService.getPublicPositionInfo(matchesId[i]);//positionSchema.findById(matchesId[i]);
         matches.push(m)
     }
 
-    console.log("company matches: ", matches)
+    // console.log("company matches: ", matches)
 
 
     res.status(200).send({'status': 'success', 'message': 'method successful', 'matches': matches});
@@ -157,14 +157,14 @@ router.get('/company/get/matches/:index', async (req, res) => {
     const matchesId = Array.from(req.position.status.interviewees, ([key]) => (key));;
     let matches = [];
 
-    console.log("user match ids: ", matchesId)
+    // console.log("user match ids: ", matchesId)
 
     for(let i = 0; i < matchesId.length; ++i){
         const m = await userProfileService.getPublicInfo(matchesId[i]);//userProfileSchema.findById(matchesId[i]);
         matches.push(m)
     }
 
-    console.log("user matches: ", matches)
+    // console.log("user matches: ", matches)
 
     res.status(200).send({'status': 'success', 'message': 'method successful', 'matches': matches});
 });

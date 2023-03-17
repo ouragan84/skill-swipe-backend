@@ -54,7 +54,7 @@ const getListPositions = async (user /*, size*/) => {
 
     list.forEach(c => {
         listOfCards.push(c.card);
-        console.log(" -> " + (c.card ? c.card.positionInfo.title : "null"))
+        // console.log(" -> " + (c.card ? c.card.positionInfo.title : "null"))
     });
 
     console.l
@@ -93,7 +93,7 @@ const getListUsers = async (position/*, size*/) => {
         card.distance = distance;
         card.id = user._id;
 
-        console.log("card: ", card)
+        // console.log("card: ", card)
 
         list.splice(i,0,{card, score});
     }
@@ -102,7 +102,7 @@ const getListUsers = async (position/*, size*/) => {
 
     list.forEach(c => {
         listOfCards.push(c.card);
-        console.log(" -> " + (c.card ? c.card.personalInformation.firstName + ' ' + c.card.personalInformation.lastName : "null"))
+        // console.log(" -> " + (c.card ? c.card.personalInformation.firstName + ' ' + c.card.personalInformation.lastName : "null"))
     });
 
     return listOfCards;
