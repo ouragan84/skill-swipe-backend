@@ -130,6 +130,31 @@ router.post('/company/accept/applicant/:index', async (req, res) => {
     res.status(200).send({'status': 'success', 'message': 'successfully rejected applicant'});
 });
 
+router.use('/user/get/matches', auth.checkConsumerCompleteAuth, checkUser)
+router.get('/user/get/matches', async (req, res) => {
+    const matchesId = Array.from(req.user.status.interviewing, ([key]) => (key));;
+    let matches = [];
+
+    for(let i = 0; i < matchesId.length; ++i){
+        const m = await positionSchema.findById(matchesId[i]);
+        matches.push(m)
+    }
+
+    res.status(200).send({'status': 'success', 'message': 'method successful', 'matches': matches});
+});
+
+router.use('/company/get/matches', auth.checkConsumerCompleteAuth, checkPosition)
+router.get('/company/get/matches', async (req, res) => {
+    const matchesId = Array.from(req.user.position.interviewees, ([key]) => (key));;
+    let matches = [];
+
+    for(let i = 0; i < matchesId.length; ++i){
+        const m = await userProfileSchema.findById(matchesId[i]);
+        matches.push(m)
+    }
+
+    res.status(200).send({'status': 'success', 'message': 'method successful', 'matches': matches});
+});
 
 
 module.exports = {createSocket, router};
