@@ -69,17 +69,17 @@ const getListUsers = async (position/*, size*/) => {
 
     let allApplicants = Array.from(position.status.applicants, ([key]) => (key));
 
-    console.log("allApplicants: ", allApplicants)
+    // console.log("allApplicants: ", allApplicants)
     
     for(let j = 0; j < allApplicants.length; ++j){
 
         const user = await userProfileSchema.findById(allApplicants[j]);
 
-        console.log("user", j, ": ", user)
+        // console.log("user", j, ": ", user)
 
         const {score, distance} = getCompatibilityScore(user, position);
 
-        console.log("score", score)
+        // console.log("score", score)
 
         let i;
         for(i = 0; i < list.length; ++i){
@@ -87,7 +87,7 @@ const getListUsers = async (position/*, size*/) => {
                 break;
         }
 
-        console.log("i: ", i)
+        // console.log("i: ", i)
 
         const card = await getPublicInfo(user.id);
         card.distance = distance;
@@ -102,7 +102,7 @@ const getListUsers = async (position/*, size*/) => {
 
     list.forEach(c => {
         listOfCards.push(c.card);
-        console.log(" -> " + (c.card ? c.card.firstName + ' ' + c.card.lastName : "null"))
+        console.log(" -> " + (c.card ? c.card.personalInformation.firstName + ' ' + c.card.personalInformation.lastName : "null"))
     });
 
     return listOfCards;
