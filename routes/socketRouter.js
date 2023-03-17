@@ -152,8 +152,8 @@ router.get('/user/get/matches', async (req, res) => {
     res.status(200).send({'status': 'success', 'message': 'method successful', 'matches': matches});
 });
 
-router.use('/company/get/matches', auth.checkConsumerCompleteAuth, checkPosition)
-router.get('/company/get/matches', async (req, res) => {
+router.use('/company/get/matches/:index', auth.checkConsumerCompleteAuth, checkPosition)
+router.get('/company/get/matches/:index', async (req, res) => {
     const matchesId = Array.from(req.user.position.interviewees, ([key]) => (key));;
     let matches = [];
 
