@@ -195,7 +195,7 @@ const getRelevantExperience = (user, position) => {
     user.experience.forEach(exp => {
         let expImp = 0;
         exp.skills.forEach(skill => {
-            if(skills.has(skill) && skill.get(skill) > expImp)
+            if(skills.has(skill) && skills.get(skill) > expImp)
                 expImp = skill.get(skill);
         });
         months += expImp * exp.months;

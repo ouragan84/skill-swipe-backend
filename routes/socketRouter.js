@@ -73,7 +73,7 @@ const checkPosition = async (req, res, next) => {
     if(req.consumer.isTypeUser)
         return res.status(401).send({'status': 'failure', 'message': 'method reserved for companies'});
     req.company = await companyProfileSchema.findById(req.consumer.profileId);
-    req.position = await positionSchema.findById(req.company.positions[Number(req.body.index)]); // make sure to add index in body
+    req.position = await positionSchema.findById(req.company.positions[Number(req.params.index)]); // make sure to add index in body
     if(!req.position)
         return res.status(401).send({'status': 'failure', 'message': 'position not found'});
     next();
@@ -104,23 +104,23 @@ router.post('/user/apply/position', async (req, res) => {
     res.status(200).send({'status': 'success', 'message': 'successfully applied to position'});
 });
 
-router.use('/company/get/cards', auth.checkConsumerCompleteAuth, checkPosition)
-router.get('/company/get/cards', async (req, res) => {
+router.use('/company/get/cards/:index', auth.checkConsumerCompleteAuth, checkPosition)
+router.get('/company/get/cards/:index', async (req, res) => {
     // const user = await userProfileSchema.findById(req.body.userId);
     const ret = matchMaker.getListUsers(req.position);
     res.status(200).send({'status': 'success', 'message': 'method successful', 'cards': ret});
 });
 
-router.use('/company/reject/applicant', auth.checkConsumerCompleteAuth, checkPosition)
-router.post('/company/reject/applicant', async (req, res) => {
+router.use('/company/reject/applicant/:index', auth.checkConsumerCompleteAuth, checkPosition)
+router.post('/company/reject/applicant/:index', async (req, res) => {
     let user = await userProfileSchema.findById(req.body.userId);
     matchMaker.rejectApplicant(req.position, user);
     // io.to(onlineUsersReversed.get(user._id)).emit('remove-match');
     res.status(200).send({'status': 'success', 'message': 'successfully accepted applicant'});
 });
 
-router.use('/company/accept/applicant', auth.checkConsumerCompleteAuth, checkPosition)
-router.post('/company/accept/applicant', async (req, res) => {
+router.use('/company/accept/applicant/:index', auth.checkConsumerCompleteAuth, checkPosition)
+router.post('/company/accept/applicant/:index', async (req, res) => {
     let user = await userProfileSchema.findById(req.body.userId);
     matchMaker.acceptApplicant(req.position, user);
     // io send update to user
