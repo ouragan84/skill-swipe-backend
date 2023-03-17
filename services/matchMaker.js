@@ -83,7 +83,7 @@ const getListUsers = async (position/*, size*/) => {
 
         const card = await getPublicInfo(user.id);
         card.distance = distance;
-        card.id = pos._id;
+        card.id = user._id;
         list.splice(i,0,{card, score});
     }
 
