@@ -71,7 +71,7 @@ const getListUsers = async (position/*, size*/) => {
     
     for(let j = 0; j < allApplicants.length; ++j){
 
-        const user = await userProfileSchema.findById(allApplicants[i]);
+        const user = await userProfileSchema.findById(allApplicants[j]);
 
         const {score, distance} = getCompatibilityScore(user, position);
 
