@@ -83,7 +83,7 @@ const getListUsers = async (position/*, size*/) => {
 
         let i;
         for(i = 0; i < list.length; ++i){
-            if(score > element.score)
+            if(score > list[i].score)
                 break;
         }
 
