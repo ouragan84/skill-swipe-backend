@@ -12,6 +12,6 @@ const readTextFile = () => {
 }
 
 // Call the function with the URL of your fixed file
-const tags = readTextFile();
+const jobTags = readTextFile();
 
-module.exports = {tags};
+module.exports = jobTags;
