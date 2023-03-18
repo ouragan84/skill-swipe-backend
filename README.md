@@ -50,9 +50,11 @@ It is also important to set the right policy for AWS S3 bucket, since we are add
 }
 ```
 
-Please make sure to have `npm` and `node` installed with version `19.5.0` or greater (`node -v` to check version).
+Please make sure to have `npm` and `node` installed with version `18.x.x` or greater (`node -v` to check version).
 
 To install node, please visit [nodejs.org](https://www.nodejs.org/)
+
+Then install the dependencies: 
 
 ```
 npm install
