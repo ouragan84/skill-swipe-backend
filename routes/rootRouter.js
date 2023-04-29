@@ -27,6 +27,12 @@ router.get('/get/image-url/:title', async (req, res) => {
   res.status(200).send({'status':'success', 'message':'found image url successfully', 'url': url})
 });
 
+router.post('/ping', (req, res) => {
+  console.log('got ping:');
+  console.log(req.body);
+  res.status(200).send({'status':'ok'})
+})
+
 router.post('/send-email', (req, res) => {
   sendMail(req.body.to, req.body.subject, req.body.text, req.body.html);
   return res.status(200).send('Success');
